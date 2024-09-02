@@ -1,0 +1,16 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  labels:
+    app.kubernetes.io/name: hestia-operator
+    app.kubernetes.io/managed-by: kustomize
+  name: runner
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: test
+  runnerSelector:
+    matchLabels:
+      app: runner-1
+  template:
+    # pod template spec

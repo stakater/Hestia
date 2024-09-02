@@ -1,0 +1,4 @@
+## Append samples of your project ##
+resources:
+- e2e_v1alpha1_runner.yaml
+#+kubebuilder:scaffold:manifestskustomizesamples
