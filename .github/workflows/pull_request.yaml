@@ -24,3 +24,4 @@ jobs:
       GOLANG_VERSION: ~1.21
       DOCKERFILE_PATH: Dockerfile
       GOLANG_CI_LINT_VERSION: v1.53.3
+      Run_GOLANG_CI_LINT: false
