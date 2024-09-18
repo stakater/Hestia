@@ -104,15 +104,19 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 				return ctrl.Result{}, nil
 			}
 
+			jobRunnerLabel := map[string]string{}
+			jobRunnerLabel[RunnerLabel] = "true"
+
 			job = &v1.Job{
 				ObjectMeta: v12.ObjectMeta{
 					Namespace: runner.Namespace,
 					Name:      runner.Name,
+					Labels:    jobRunnerLabel,
 				},
 				Spec: v1.JobSpec{
 					Template: runner.Spec.Template,
 					//TTLSecondsAfterFinished: &[]int32{30 * 60}[0],
-					BackoffLimit: &[]int32{1}[0],
+					BackoffLimit: &[]int32{0}[0],
 				},
 			}
 
@@ -131,6 +135,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			runner.Status.ResourceGeneration = runner.GetGeneration()
 			runner.Status.RunnerGeneration = runnersHelper.Generations
 			runner.Status.DeploymentsGeneration = deploymentsHelper.Generations
+			runner.Status.ExecutionGeneration += 1
 			logger.Info(fmt.Sprintf("created new job: %s", job.Name))
 		} else {
 			logger.Info(fmt.Sprintf("failed fetching job [%s]", job.Name))
@@ -264,7 +269,7 @@ func enqueueForWatchingRunners(r *RunnerReconciler) handler.MapFunc {
 
 		for _, r := range runners.Items {
 			runnerSelector, err := v12.LabelSelectorAsMap(r.Spec.RunnerSelector)
-			if err != nil || labels.Conflicts(runnerSelector, runner.Labels) {
+			if err != nil || runner.Name == r.Name || labels.Conflicts(runnerSelector, runner.Labels) {
 				continue
 			}
 

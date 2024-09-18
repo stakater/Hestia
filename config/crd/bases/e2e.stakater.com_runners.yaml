@@ -220,6 +220,9 @@ spec:
                   format: int64
                   type: integer
                 type: object
+              executionGeneration:
+                format: int64
+                type: integer
               failed:
                 type: boolean
               pending:

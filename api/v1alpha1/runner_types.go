@@ -57,6 +57,7 @@ type RunnerStatus struct {
 	ResourceGeneration    int64            `json:"resourceGeneration,omitempty"`
 	RunnerGeneration      map[string]int64 `json:"runnerGeneration,omitempty"`
 	DeploymentsGeneration map[string]int64 `json:"deploymentsGeneration,omitempty"`
+	ExecutionGeneration   int64            `json:"executionGeneration,omitempty"`
 }
 
 //+kubebuilder:object:root=true

@@ -9,6 +9,7 @@ metadata:
           "kind": "Runner",
           "metadata": {
             "labels": {
+              "app": "runner-1",
               "app.kubernetes.io/managed-by": "kustomize",
               "app.kubernetes.io/name": "hestia-operator"
             },
@@ -20,20 +21,45 @@ metadata:
                 "app": "test"
               }
             },
-            "runnerSelector": {
-              "matchLabels": {
-                "app": "runner-1"
+            "template": {
+              "metadata": {
+                "annotations": {
+                  "alpha.image.policy.openshift.io/resolve-names": "*"
+                }
+              },
+              "spec": {
+                "containers": [
+                  {
+                    "env": [
+                      {
+                        "name": "JOB_NAME",
+                        "value": "runner-1"
+                      },
+                      {
+                        "name": "PUSHGATEWAY_TOKEN",
+                        "valueFrom": {
+                          "secretKeyRef": {
+                            "key": "token",
+                            "name": "pushgateway-token"
+                          }
+                        }
+                      }
+                    ],
+                    "image": "e2e:passed",
+                    "name": "playwright"
+                  }
+                ],
+                "restartPolicy": "Never"
               }
-            },
-            "template": null
+            }
           }
         }
       ]
     capabilities: Basic Install
-    createdAt: "2024-09-02T16:07:13Z"
+    createdAt: "2024-09-17T11:07:19Z"
     operators.operatorframework.io/builder: operator-sdk-v1.36.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: hestia-operator.v0.0.1
+  name: hestia-operator.v0.0.2
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -177,7 +203,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/stakaterdockerhubpullroot/hestia-operator:v0.0.1
+                image: docker.io/stakaterdockerhubpullroot/hestia-operator:v0.0.2
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -265,4 +291,4 @@ spec:
   provider:
     name: Stakater AB
     url: www.stakater.com
-  version: 0.0.1
+  version: 0.0.2

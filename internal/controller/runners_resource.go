@@ -47,7 +47,7 @@ func NewRunnersResource(selector *v12.LabelSelector, ctx context.Context, client
 				r.Ready = false
 			}
 
-			r.Generations[runner.Name] = runner.GetGeneration()
+			r.Generations[runner.Name] = runner.Status.ExecutionGeneration
 		}
 
 	}

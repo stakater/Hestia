@@ -1,23 +1,31 @@
 apiVersion: e2e.stakater.com/v1alpha1
 kind: Runner
 metadata:
-  name: runner
+  name: runner-wait
+  labels:
+    app.kubernetes.io/name: hestia-operator
+    app.kubernetes.io/managed-by: kustomize
 spec:
   deploymentSelector:
     matchLabels:
-      app: test
+      app: test2
+  runnerSelector:
+    matchLabels:
+      app: runner-1
   template:
+    metadata:
+      annotations:
+        alpha.image.policy.openshift.io/resolve-names: '*'
     spec:
       containers:
         - name: playwright
-          image: e2e:passed
+          image: e2e:skip-step
           env:
             - name: JOB_NAME
-              value: runner-1
+              value: runner-2
             - name: PUSHGATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: pushgateway-token
                   key: token
       restartPolicy: Never
-

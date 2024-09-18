@@ -126,6 +126,9 @@ package: hestia-operator
 name: alpha
 entries:
   - name: hestia-operator.v0.0.1
+  - name: hestia-operator.v0.0.2
+    replaces: hestia-operator.v0.0.1
+
 ---
 image: docker.io/stakaterdockerhubpullroot/hestia-operator-bundle:v0.0.1
 name: hestia-operator.v0.0.1
@@ -213,5 +216,120 @@ relatedImages:
 - image: gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
   name: ""
 - image: stakaterdockerhubpullroot/hestia-operator:v0.0.1
+  name: ""
+schema: olm.bundle
+---
+image: docker.io/stakaterdockerhubpullroot/hestia-operator-bundle:v0.0.2
+name: hestia-operator.v0.0.2
+package: hestia-operator
+properties:
+- type: olm.gvk
+  value:
+    group: e2e.stakater.com
+    kind: Runner
+    version: v1alpha1
+- type: olm.package
+  value:
+    packageName: hestia-operator
+    version: 0.0.2
+- type: olm.csv.metadata
+  value:
+    annotations:
+      alm-examples: |-
+        [
+          {
+            "apiVersion": "e2e.stakater.com/v1alpha1",
+            "kind": "Runner",
+            "metadata": {
+              "labels": {
+                "app": "runner-1",
+                "app.kubernetes.io/managed-by": "kustomize",
+                "app.kubernetes.io/name": "hestia-operator"
+              },
+              "name": "runner"
+            },
+            "spec": {
+              "deploymentSelector": {
+                "matchLabels": {
+                  "app": "test"
+                }
+              },
+              "template": {
+                "metadata": {
+                  "annotations": {
+                    "alpha.image.policy.openshift.io/resolve-names": "*"
+                  }
+                },
+                "spec": {
+                  "containers": [
+                    {
+                      "env": [
+                        {
+                          "name": "JOB_NAME",
+                          "value": "runner-1"
+                        },
+                        {
+                          "name": "PUSHGATEWAY_TOKEN",
+                          "valueFrom": {
+                            "secretKeyRef": {
+                              "key": "token",
+                              "name": "pushgateway-token"
+                            }
+                          }
+                        }
+                      ],
+                      "image": "e2e:passed",
+                      "name": "playwright"
+                    }
+                  ],
+                  "restartPolicy": "Never"
+                }
+              }
+            }
+          }
+        ]
+      capabilities: Basic Install
+      createdAt: "2024-09-16T14:23:13Z"
+      operators.operatorframework.io/builder: operator-sdk-v1.36.1
+      operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
+    apiServiceDefinitions: {}
+    crdDescriptions:
+      owned:
+      - description: Runner is the Schema for the runners API
+        displayName: Runner
+        kind: Runner
+        name: runners.e2e.stakater.com
+        version: v1alpha1
+    description: For triggering and sequencing job executions
+    displayName: Hestia Operator
+    installModes:
+    - supported: false
+      type: OwnNamespace
+    - supported: false
+      type: SingleNamespace
+    - supported: false
+      type: MultiNamespace
+    - supported: true
+      type: AllNamespaces
+    keywords:
+    - Hestia
+    - Openshift
+    - Kubernetes
+    - Job
+    - E2E
+    - Testing
+    links:
+    - name: Hestia Operator
+      url: https://hestia-operator.domain
+    maturity: alpha
+    provider:
+      name: Stakater AB
+      url: www.stakater.com
+relatedImages:
+- image: docker.io/stakaterdockerhubpullroot/hestia-operator-bundle:v0.0.2
+  name: ""
+- image: docker.io/stakaterdockerhubpullroot/hestia-operator:v0.0.2
+  name: ""
+- image: gcr.io/kubebuilder/kube-rbac-proxy:v0.16.0
   name: ""
 schema: olm.bundle

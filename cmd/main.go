@@ -19,7 +19,13 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	v12 "k8s.io/api/apps/v1"
+	v1 "k8s.io/api/batch/v1"
+	"k8s.io/apimachinery/pkg/labels"
+	"k8s.io/client-go/rest"
 	"os"
+	"sigs.k8s.io/controller-runtime/pkg/cache"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 
 	// Import all Kubernetes client auth plugins (e.g. Azure, GCP, OIDC, etc.)
 	// to ensure that exec-entrypoint and run can make use of them.
@@ -116,6 +122,20 @@ func main() {
 		// if you are doing or is intended to do any operation such as perform cleanups
 		// after the manager stops then its usage might be unsafe.
 		// LeaderElectionReleaseOnCancel: true,
+		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
+			watchEnabledLabel := labels.Set{}
+			watchEnabledLabel[controller.RunnerLabel] = "true"
+			opts.ByObject = map[client.Object]cache.ByObject{
+				&v12.Deployment{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+				&v1.Job{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+			}
+
+			return cache.New(config, opts)
+		},
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
