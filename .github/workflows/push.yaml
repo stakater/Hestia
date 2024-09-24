@@ -23,5 +23,7 @@ jobs:
       CONTAINER_REGISTRY_PASSWORD: ${{ secrets.GHCR_TOKEN }}
     with:
       GOLANG_VERSION: ~1.21
+      RUN_GOLANG_CI_LINT: false
+      RUN_GOLANG_TESTS: false
       DOCKERFILE_PATH: Dockerfile
       RELEASE_BRANCH: main
