@@ -8,11 +8,6 @@ metadata:
           "apiVersion": "e2e.stakater.com/v1alpha1",
           "kind": "Runner",
           "metadata": {
-            "labels": {
-              "app": "runner-1",
-              "app.kubernetes.io/managed-by": "kustomize",
-              "app.kubernetes.io/name": "hestia-operator"
-            },
             "name": "runner"
           },
           "spec": {
@@ -22,11 +17,6 @@ metadata:
               }
             },
             "template": {
-              "metadata": {
-                "annotations": {
-                  "alpha.image.policy.openshift.io/resolve-names": "*"
-                }
-              },
               "spec": {
                 "containers": [
                   {
@@ -56,10 +46,10 @@ metadata:
         }
       ]
     capabilities: Basic Install
-    createdAt: "2024-09-17T11:07:19Z"
-    operators.operatorframework.io/builder: operator-sdk-v1.36.1
+    createdAt: "2025-03-06T09:13:38Z"
+    operators.operatorframework.io/builder: operator-sdk-v1.39.1
     operators.operatorframework.io/project_layout: go.kubebuilder.io/v4
-  name: hestia-operator.v0.0.2
+  name: hestia-operator.v0.0.1
   namespace: placeholder
 spec:
   apiservicedefinitions: {}
@@ -203,7 +193,7 @@ spec:
                 - --leader-elect
                 command:
                 - /manager
-                image: docker.io/stakaterdockerhubpullroot/hestia-operator:v0.0.2
+                image: ghcr.io/stakater/hestia-operator:v0.0.1
                 livenessProbe:
                   httpGet:
                     path: /healthz
@@ -291,4 +281,4 @@ spec:
   provider:
     name: Stakater AB
     url: www.stakater.com
-  version: 0.0.2
+  version: 0.0.1

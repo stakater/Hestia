@@ -19,6 +19,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"reflect"
+
 	"github.com/example/hestia-operator/api/v1alpha1"
 	apps "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/batch/v1"
@@ -27,7 +29,6 @@ import (
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/types"
-	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -50,10 +51,8 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners/finalizers,verbs=update
-//+kubebuilder:rbac:groups=apps,resources=deployments,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=apps,resources=deployments/status,verbs=get
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups=batch,resources=jobs/status,verbs=get
+//+kubebuilder:rbac:groups="*",resources="*/status",verbs=get;list;watch
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	logger := log.Log.WithName(fmt.Sprintf("[%s]", req.Name))
