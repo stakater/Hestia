@@ -21,10 +21,5 @@ jobs:
       CONTAINER_REGISTRY_PASSWORD: ${{ secrets.GHCR_TOKEN }}
       SLACK_WEBHOOK_URL: ${{ secrets.STAKATER_DELIVERY_SLACK_WEBHOOK }}
     with:
-      GOLANG_VERSION: ~1.21
-      DOCKERFILE_PATH: Dockerfile
-      GOLANG_CI_LINT_VERSION: v1.53.3
-      Run_GOLANG_CI_LINT: false
-      BUILD_CUSTOM_CATALOG: true
-      RUN_GOLANG_TESTS: false
-      OPERATOR_SDK_VERSION: v1.36.1
+      ENABLE_LINTING: true
+      ENABLE_UNIT_TESTS: true

@@ -1,0 +1,7 @@
+schema: olm.channel
+package: hestia-operator
+name: alpha
+entries:
+  - name: hestia-operator.v0.0.2
+    replaces: hestia-operator.v0.0.1
+  - name: hestia-operator.v0.0.1
