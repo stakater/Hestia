@@ -1,6 +1,6 @@
 module github.com/example/hestia-operator
 
-go 1.24.1
+go 1.23.0
 
 require (
 	github.com/onsi/ginkgo/v2 v2.23.0
