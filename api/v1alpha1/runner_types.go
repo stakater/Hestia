@@ -26,11 +26,6 @@ import (
 
 type Mode string
 
-const (
-	Single   Mode = "single"
-	Multiple Mode = "multiple"
-)
-
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct {
 	DeploymentSelector *metav1.LabelSelector `json:"deploymentSelector,omitempty"`
