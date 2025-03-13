@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"time"
+
 	app "github.com/example/hestia-operator/api/v1alpha1"
 	"github.com/example/hestia-operator/internal/informers"
 	"github.com/go-logr/logr"
@@ -21,7 +23,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/manager"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 	"sigs.k8s.io/controller-runtime/pkg/source"
-	"time"
 )
 
 type RunnerReconciler struct {
@@ -109,9 +110,9 @@ func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		Named("Runner").
 		For(&app.Runner{}).
-		WatchesRawSource(source.TypedChannel[informers.DynamicResourceEvent, reconcile.Request](
+		WatchesRawSource(source.TypedChannel(
 			r.events,
-			handler.TypedEnqueueRequestsFromMapFunc[informers.DynamicResourceEvent, reconcile.Request](r.HandleTyped),
+			handler.TypedEnqueueRequestsFromMapFunc(r.HandleTyped),
 		)).
 		Complete(r)
 }
