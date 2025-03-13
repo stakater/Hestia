@@ -3,6 +3,9 @@ package informers
 import (
 	"context"
 	"fmt"
+	"sync"
+	"time"
+
 	"github.com/example/hestia-operator/internal"
 	"github.com/go-logr/logr"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -15,8 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
-	"sync"
-	"time"
 )
 
 type DynamicResourceEvent struct {
