@@ -19,20 +19,22 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
-
-	"github.com/example/hestia-operator/api/v1alpha1"
-	apps "k8s.io/api/apps/v1"
-	v1 "k8s.io/api/batch/v1"
+	"github.com/go-logr/logr"
+	v13 "github.com/openshift/api/apps/v1"
+	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/resources"
+	"github.com/stakater/hestia-operator/internal/status"
+	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
+	"reflect"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/builder"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
 	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/handler"
 	"sigs.k8s.io/controller-runtime/pkg/log"
@@ -40,12 +42,11 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 )
 
-const RunnerLabel = "runner.stakater.com/enable"
-
 // RunnerReconciler reconciles a Runner object
 type RunnerReconciler struct {
 	client.Client
 	Scheme *runtime.Scheme
+	logger logr.Logger
 }
 
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners,verbs=get;list;watch;create;update;patch;delete
@@ -55,7 +56,8 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups="*",resources="*/status",verbs=get;list;watch
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.Log.WithName(fmt.Sprintf("[%s]", req.Name))
+	r.logger = log.Log.WithName(fmt.Sprintf("[%s]", req.Name))
+	r.logger.WithName(req.NamespacedName.String()).Info("Reconciling...")
 
 	// Fetch runner
 	runner := &v1alpha1.Runner{}
@@ -65,246 +67,146 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 			return ctrl.Result{}, nil
 		}
 
-		logger.Error(err, fmt.Sprintf("fetching runner: [%s]", req.NamespacedName))
+		r.logger.Error(err, fmt.Sprintf("fetching runner: [%s]", req.NamespacedName))
 		return ctrl.Result{}, err
 	}
 
 	// Handle delete
 	if runner.GetDeletionTimestamp() != nil {
-		logger.Info("deleted")
+		r.logger.Info("deleted")
 		return ctrl.Result{}, nil
 	}
 
-	deploymentsHelper, err := NewDeploymentsResource(runner.Spec.DeploymentSelector, ctx, r.Client)
+	// Get matchedDeployments selected deployments
+	deploymentResource := resources.NewResourceCollector([]schema.GroupVersionKind{
+		{Group: "apps", Version: "v1", Kind: "Deployment"},
+		{Group: "apps", Version: "v1", Kind: "StatefulSet"},
+		{Group: "batch", Version: "v1", Kind: "Job"},
+		{Group: "apps.openshift.io", Version: "v1", Kind: "DeploymentConfig"},
+	})
+
+	matchedDeployments, err := deploymentResource.GetAll(ctx, r.Client, runner.Spec.DeploymentSelector)
 	if err != nil {
-		logger.Error(err, "fetching deployments")
-		return ctrl.Result{}, err
+		return r.HandleError(ctx, runner, err, "error fetching selected deployments")
 	}
 
-	runnersHelper, err := NewRunnersResource(runner.Spec.RunnerSelector, ctx, r.Client)
+	// Get matchedDeployments selected runners
+	runnerResource := resources.NewResourceCollector([]schema.GroupVersionKind{
+		{Group: "e2e.stakater.com", Version: "v1alpha1", Kind: "Runner"},
+	})
+	matchedRunners, err := runnerResource.GetAll(ctx, r.Client, runner.Spec.RunnerSelector)
 	if err != nil {
-		logger.Error(err, "fetching runners")
-		return ctrl.Result{}, err
+		return r.HandleError(ctx, runner, err, "error fetching selected runners")
 	}
 
-	// fetch existing job
-	job := &v1.Job{}
-	err = r.Get(ctx, client.ObjectKey{
-		Namespace: runner.Namespace,
-		Name:      runner.Name,
-	}, job)
-
+	// Setup job config
+	jobConfig := resources.NewJobConfig(runner, r.Scheme)
+	matchedResources := append(matchedRunners, matchedDeployments...)
+	err = jobConfig.CreateOrUpdate(ctx, r.Client, matchedResources...)
 	if err != nil {
-		if errors.IsNotFound(err) {
-			if !deploymentsHelper.Ready || !runnersHelper.Ready {
-				logger.Info(fmt.Sprintf("is waiting for conditions deployments: %v & runners: %v",
-					deploymentsHelper.Ready,
-					runnersHelper.Ready))
-				return ctrl.Result{}, nil
-			}
-
-			jobRunnerLabel := map[string]string{}
-			jobRunnerLabel[RunnerLabel] = "true"
-
-			job = &v1.Job{
-				ObjectMeta: v12.ObjectMeta{
-					Namespace: runner.Namespace,
-					Name:      runner.Name,
-					Labels:    jobRunnerLabel,
-				},
-				Spec: v1.JobSpec{
-					Template: runner.Spec.Template,
-					//TTLSecondsAfterFinished: &[]int32{30 * 60}[0],
-					BackoffLimit: &[]int32{0}[0],
-				},
-			}
-
-			err = controllerutil.SetOwnerReference(runner, job, r.Scheme)
-			if err != nil {
-				logger.Error(err, fmt.Sprintf("failed to set job owner ref: %s", job.Name))
-				return ctrl.Result{}, err
-			}
-
-			err = r.Client.Create(ctx, job)
-			if err != nil {
-				logger.Error(err, fmt.Sprintf("failed to create new job: %s", job.Name))
-				return ctrl.Result{}, err
-			}
-
-			runner.Status.ResourceGeneration = runner.GetGeneration()
-			runner.Status.RunnerGeneration = runnersHelper.Generations
-			runner.Status.DeploymentsGeneration = deploymentsHelper.Generations
-			runner.Status.ExecutionGeneration += 1
-			logger.Info(fmt.Sprintf("created new job: %s", job.Name))
-		} else {
-			logger.Info(fmt.Sprintf("failed fetching job [%s]", job.Name))
-			return ctrl.Result{}, err
-		}
+		return r.HandleError(ctx, runner, err, "error setting up job config")
 	}
 
-	// delete no longer valid job
-	if runner.Status.ResourceGeneration != runner.GetGeneration() ||
-		runner.Status.DeploymentsGeneration != nil && !reflect.DeepEqual(runner.Status.DeploymentsGeneration,
-			deploymentsHelper.Generations) ||
-		runner.Status.RunnerGeneration != nil && !reflect.DeepEqual(runner.Status.RunnerGeneration, runnersHelper.Generations) {
+	return r.HandleSuccess(ctx, runner, resources.CreateReadinessStatus(matchedResources...))
+}
 
-		logger.Info(fmt.Sprintf("deleted expired job: %s", job.Name))
-
-		options := &client.DeleteOptions{
-			PropagationPolicy: new(v12.DeletionPropagation),
+var readyPredicateFn = predicate.Funcs{
+	CreateFunc: func(e event.CreateEvent) bool {
+		return false
+	},
+	DeleteFunc: func(e event.DeleteEvent) bool {
+		return true
+	},
+	UpdateFunc: func(e event.UpdateEvent) bool {
+		objType := reflect.TypeOf(e.ObjectNew)
+		if objType.Kind() == reflect.Ptr {
+			objType = objType.Elem()
 		}
-		*options.PropagationPolicy = v12.DeletePropagationBackground
-		return ctrl.Result{Requeue: true}, r.Delete(ctx, job, options)
-	} else {
-		// update job status
-		status := getJobStatus(job)
-		runner.Status.Pending = status[v1.JobComplete] != v12.ConditionTrue
-		runner.Status.Success = status[v1.JobComplete] == v12.ConditionTrue
-		runner.Status.Failed = status[v1.JobFailed] == v12.ConditionTrue
+		kind := objType.Name()
 
-		// Update runner status
-		err = r.Client.Status().Update(ctx, runner)
-		if err != nil {
-			logger.Error(err, "failed to update status")
-			return ctrl.Result{}, err
+		switch kind {
+		case "Deployment":
+			od := e.ObjectOld.(*v1.Deployment)
+			cd := e.ObjectNew.(*v1.Deployment)
+
+			return !status.IsDeploymentReady(od) && status.IsDeploymentReady(cd)
+		case "StatefulSet":
+			sd := e.ObjectOld.(*v1.StatefulSet)
+			sc := e.ObjectNew.(*v1.StatefulSet)
+
+			return !status.IsStatefulSetReady(sd) && status.IsStatefulSetReady(sc)
+		case "DeploymentConfig":
+			dcd := e.ObjectOld.(*v13.DeploymentConfig)
+			dcc := e.ObjectNew.(*v13.DeploymentConfig)
+
+			return !status.IsDeploymentConfigReady(dcd) && status.IsDeploymentConfigReady(dcc)
+		default:
+			return false
 		}
-	}
-
-	return ctrl.Result{}, nil
+	},
 }
 
 // SetupWithManager sets up the controller with the Manager.
 func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.Runner{}).
-		Watches(&v1.Job{}, handler.EnqueueRequestForOwner(mgr.GetScheme(), mgr.GetRESTMapper(), &v1alpha1.Runner{}),
-			builder.WithPredicates(predicate.Funcs{
-				CreateFunc: func(createEvent event.CreateEvent) bool {
-					return false
-				},
-				DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
-					return true
-				},
-				GenericFunc: func(genericEvent event.GenericEvent) bool {
-					return false
-				},
-				UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-					old := getJobStatus(updateEvent.ObjectOld.(*v1.Job))
-					recent := getJobStatus(updateEvent.ObjectNew.(*v1.Job))
-
-					return old[v1.JobComplete] != v12.ConditionTrue && recent[v1.JobComplete] == v12.ConditionTrue
-				},
-			})).
-		Watches(&v1alpha1.Runner{}, handler.EnqueueRequestsFromMapFunc(enqueueForWatchingRunners(r)),
-			builder.WithPredicates(predicate.Funcs{
-				CreateFunc: func(createEvent event.CreateEvent) bool {
-					return false
-				},
-				DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
-					return false
-				},
-				GenericFunc: func(genericEvent event.GenericEvent) bool {
-					return false
-				},
-				UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-					old := updateEvent.ObjectOld.(*v1alpha1.Runner)
-					recent := updateEvent.ObjectNew.(*v1alpha1.Runner)
-
-					return !old.Status.Success && recent.Status.Success
-				},
-			})).
-		Watches(&apps.Deployment{}, handler.EnqueueRequestsFromMapFunc(enqueueForDeployment(r)),
-			builder.WithPredicates(predicate.Funcs{
-				CreateFunc: func(event event.CreateEvent) bool {
-					return false
-				},
-				DeleteFunc: func(deleteEvent event.DeleteEvent) bool {
-					return true
-				},
-				GenericFunc: func(genericEvent event.GenericEvent) bool {
-					return false
-				},
-				UpdateFunc: func(updateEvent event.UpdateEvent) bool {
-					old := updateEvent.ObjectOld.(*apps.Deployment)
-					recent := updateEvent.ObjectNew.(*apps.Deployment)
-
-					label := map[string]string{}
-					label[RunnerLabel] = "true"
-					if labels.Conflicts(label, recent.Labels) {
-						return false
-					}
-
-					return isDeploymentReady(old) != isDeploymentReady(recent)
-				},
-			})).
+		For(&v1alpha1.Runner{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		Watches(&v1.Deployment{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
+		Watches(&v1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
+		Watches(&v13.DeploymentConfig{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Complete(r)
 }
 
-type SpecialRequest struct {
-	reconcile.Request
-	Custom string `json:"custom,omitempty"`
-}
-
-func getJobStatus(job *v1.Job) map[v1.JobConditionType]v12.ConditionStatus {
-	status := make(map[v1.JobConditionType]v12.ConditionStatus)
-
-	for _, condition := range job.Status.Conditions {
-		status[condition.Type] = v12.ConditionStatus(condition.Status)
+func (r *RunnerReconciler) HandleError(ctx context.Context, cr *v1alpha1.Runner, err error, msg string) (ctrl.Result, error) {
+	if err != nil {
+		cr.Status.Conditions.SetReady(v12.ConditionFalse, fmt.Sprintf("%s. %s", msg, err.Error()))
+	} else {
+		cr.Status.Conditions.SetReady(v12.ConditionFalse, msg)
 	}
 
-	return status
+	err = r.Status().Update(ctx, cr)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, nil
+	}
+	return ctrl.Result{}, nil
 }
 
-func enqueueForWatchingRunners(r *RunnerReconciler) handler.MapFunc {
-	return func(ctx context.Context, object client.Object) []reconcile.Request {
-		runner := object.(*v1alpha1.Runner)
-		var requests []reconcile.Request
+func (r *RunnerReconciler) HandleSuccess(ctx context.Context, cr *v1alpha1.Runner, readinessStatus []v1alpha1.WatchedResource) (ctrl.Result, error) {
+	cr.Status.Conditions.SetReady(v12.ConditionTrue)
+	cr.Status.WatchedResources = readinessStatus
 
-		runners := &v1alpha1.RunnerList{}
-		err := r.Client.List(ctx, runners)
+	err := r.Status().Update(ctx, cr)
+	if err != nil {
+		return ctrl.Result{Requeue: true}, nil
+	}
+	return ctrl.Result{}, nil
+}
+
+// labelMatchingHandler reconcile Runners with matching deployment selector label
+func (r *RunnerReconciler) labelMatchingHandler(ctx context.Context, object client.Object) []reconcile.Request {
+	var request []reconcile.Request
+	runners := &v1alpha1.RunnerList{}
+	err := r.Client.List(ctx, runners)
+	if err != nil {
+		r.logger.Error(err, "failed to list runners")
+		return request
+	}
+
+	for _, runner := range runners.Items {
+		selector, err := v12.LabelSelectorAsSelector(runner.Spec.DeploymentSelector)
 		if err != nil {
-			return requests
+			r.logger.Error(err, "failed to create label selector")
+			return request
 		}
 
-		for _, r := range runners.Items {
-			runnerSelector, err := v12.LabelSelectorAsMap(r.Spec.RunnerSelector)
-			if err != nil || runner.Name == r.Name || labels.Conflicts(runnerSelector, runner.Labels) {
-				continue
-			}
-
-			requests = append(requests, reconcile.Request{
+		if selector.Matches(labels.Set(object.GetLabels())) {
+			request = append(request, reconcile.Request{
 				NamespacedName: types.NamespacedName{
-					Namespace: r.Namespace,
-					Name:      r.Name,
+					Namespace: runner.GetNamespace(),
+					Name:      runner.GetName(),
 				},
 			})
 		}
-
-		return requests
 	}
-}
 
-func enqueueForDeployment(r *RunnerReconciler) handler.MapFunc {
-	return func(ctx context.Context, object client.Object) []reconcile.Request {
-		deployment := object.(*apps.Deployment)
-		requests := make([]reconcile.Request, 0)
-		runners := &v1alpha1.RunnerList{}
-		_ = r.Client.List(ctx, runners)
-
-		for _, r := range runners.Items {
-			selector, err := v12.LabelSelectorAsMap(r.Spec.DeploymentSelector)
-			if err != nil || labels.Conflicts(selector, deployment.Labels) {
-				continue
-			}
-
-			requests = append(requests, reconcile.Request{
-				NamespacedName: types.NamespacedName{
-					Namespace: r.Namespace,
-					Name:      r.Name,
-				},
-			})
-		}
-
-		return requests
-	}
+	return request
 }

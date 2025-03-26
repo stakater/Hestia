@@ -5,26 +5,25 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - apps
+  - ""
   resources:
-  - deployments
+  - configmaps
   verbs:
-  - create
-  - delete
   - get
   - list
-  - patch
-  - update
   - watch
 - apiGroups:
-  - apps
+  - '*'
   resources:
-  - deployments/status
+  - '*/status'
   verbs:
   - get
+  - list
+  - watch
 - apiGroups:
   - batch
   resources:
+  - cronjobs
   - jobs
   verbs:
   - create
@@ -34,12 +33,6 @@ rules:
   - patch
   - update
   - watch
-- apiGroups:
-  - batch
-  resources:
-  - jobs/status
-  verbs:
-  - get
 - apiGroups:
   - e2e.stakater.com
   resources:

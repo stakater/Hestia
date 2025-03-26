@@ -24,7 +24,7 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 
-	"github.com/example/hestia-operator/test/utils"
+	"github.com/stakater/hestia-operator/test/utils"
 )
 
 const namespace = "hestia-operator-system"

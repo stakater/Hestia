@@ -27,7 +27,7 @@ import (
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 
-	e2ev1alpha1 "github.com/example/hestia-operator/api/v1alpha1"
+	e2ev1alpha1 "github.com/stakater/hestia-operator/api/v1alpha1"
 )
 
 var _ = Describe("Runner Controller", func() {
