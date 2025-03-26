@@ -2,6 +2,9 @@ package status
 
 import (
 	ocp "github.com/openshift/api/apps/v1"
+	"github.com/redhat-cop/operator-utils/pkg/util/apis"
+	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/constants"
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/batch/v1"
 	v13 "k8s.io/api/core/v1"
@@ -30,7 +33,13 @@ var (
 			return IsStatefulSetReady(sts)
 		},
 		"Runner": func(obj unstructured.Unstructured) bool {
-			return false
+			runner := &v1alpha1.Runner{}
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, runner)
+			if err != nil {
+				return false
+			}
+
+			return IsRunnerReady(runner)
 		},
 		"Job": func(obj unstructured.Unstructured) bool {
 			job := &v12.Job{}
@@ -52,6 +61,19 @@ var (
 		},
 	}
 )
+
+func IsRunnerReady(runner *v1alpha1.Runner) bool {
+	if runner == nil {
+		return false
+	}
+
+	lastRunCondition, ok := apis.GetCondition(constants.JobStatusType, runner.Status.Conditions.Conditions)
+	if !ok {
+		return false
+	}
+
+	return lastRunCondition.Reason == constants.SuccessfulRunReason
+}
 
 func IsDeploymentReady(deployment *v1.Deployment) bool {
 	return deployment != nil &&

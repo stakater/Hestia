@@ -58,8 +58,7 @@ func (c *ResourceCollector) GetAll(ctx context.Context, kc client.Client, labelS
 	return result, nil
 }
 
-func CreateReadinessMap(objects ...unstructured.Unstructured) map[string]string {
-	readinessMap := make(map[string]string)
+func CreateReadinessMap(readinessMap map[string]string, objects ...unstructured.Unstructured) map[string]string {
 	for _, obj := range objects {
 		readinessMap[getKey(obj)] = strconv.FormatBool(status.IsResourceReady(obj))
 	}
@@ -83,7 +82,7 @@ func CreateReadinessStatus(objects ...unstructured.Unstructured) []v1alpha1.Watc
 
 func normalizeMapKey(s string) string {
 	s = strings.ToLower(s)
-	reg := regexp.MustCompile(`[^a-z0-9_\-\.]`)
+	reg := regexp.MustCompile(`[^a-z0-9_\-.]`)
 	s = reg.ReplaceAllString(s, "_")
 	s = strings.Trim(s, "_")
 

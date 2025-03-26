@@ -56,8 +56,8 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups="*",resources="*/status",verbs=get;list;watch
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	r.logger = log.Log.WithName(fmt.Sprintf("[%s]", req.Name))
-	r.logger.WithName(req.NamespacedName.String()).Info("Reconciling...")
+	r.logger = log.Log.WithName(fmt.Sprintf("[Runner] %s", req.NamespacedName))
+	r.logger.Info("Reconciling...")
 
 	// Fetch runner
 	runner := &v1alpha1.Runner{}
@@ -101,12 +101,13 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 
 	// Setup job config
 	jobConfig := resources.NewJobConfig(runner, r.Scheme)
-	matchedResources := append(matchedRunners, matchedDeployments...)
-	err = jobConfig.CreateOrUpdate(ctx, r.Client, matchedResources...)
+	err = jobConfig.CreateOrUpdate(ctx, r.Client, matchedDeployments, matchedRunners)
 	if err != nil {
 		return r.HandleError(ctx, runner, err, "error setting up job config")
 	}
 
+	matchedResources := append(matchedRunners, matchedDeployments...)
+	matchedResources = append(matchedRunners, matchedRunners...)
 	return r.HandleSuccess(ctx, runner, resources.CreateReadinessStatus(matchedResources...))
 }
 
@@ -149,10 +150,11 @@ var readyPredicateFn = predicate.Funcs{
 // SetupWithManager sets up the controller with the Manager.
 func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&v1alpha1.Runner{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&v1alpha1.Runner{}).
 		Watches(&v1.Deployment{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Watches(&v1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Watches(&v13.DeploymentConfig{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
+		Watches(&v1alpha1.Runner{}, handler.EnqueueRequestsFromMapFunc(r.runnerReadyHandler)).
 		Complete(r)
 }
 
@@ -199,6 +201,38 @@ func (r *RunnerReconciler) labelMatchingHandler(ctx context.Context, object clie
 		}
 
 		if selector.Matches(labels.Set(object.GetLabels())) {
+			request = append(request, reconcile.Request{
+				NamespacedName: types.NamespacedName{
+					Namespace: runner.GetNamespace(),
+					Name:      runner.GetName(),
+				},
+			})
+		}
+	}
+
+	return request
+}
+
+func (r *RunnerReconciler) runnerReadyHandler(ctx context.Context, object client.Object) []reconcile.Request {
+	var request []reconcile.Request
+	runnerObj, ok := object.(*v1alpha1.Runner)
+	if !ok || !status.IsRunnerReady(runnerObj) {
+		return request
+	}
+
+	runners := &v1alpha1.RunnerList{}
+	err := r.Client.List(ctx, runners)
+	if err != nil {
+		return request
+	}
+
+	for _, runner := range runners.Items {
+		selector, err := v12.LabelSelectorAsSelector(runner.Spec.RunnerSelector)
+		if err != nil {
+			continue
+		}
+
+		if selector.Matches(labels.Set(runnerObj.GetLabels())) {
 			request = append(request, reconcile.Request{
 				NamespacedName: types.NamespacedName{
 					Namespace: runner.GetNamespace(),

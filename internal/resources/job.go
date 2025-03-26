@@ -70,8 +70,11 @@ func (r *JobResource) SyncJob(ctx context.Context, c client.Client) error {
 			Template:                r.runner.Spec.Template,
 			TTLSecondsAfterFinished: &[]int32{30 * 60}[0],
 			BackoffLimit:            &[]int32{1}[0],
-			ActiveDeadlineSeconds:   &[]int64{r.runner.Spec.DeadlineSeconds}[0],
 		},
+	}
+
+	if r.runner.Spec.DeadlineSeconds != 0 {
+		r.resource.Spec.ActiveDeadlineSeconds = &r.runner.Spec.DeadlineSeconds
 	}
 
 	err = controllerutil.SetControllerReference(r.config, r.resource, r.scheme)

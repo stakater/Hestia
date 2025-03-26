@@ -13,14 +13,6 @@ import (
 	"strconv"
 )
 
-var (
-	JobStatusType       = "JobCompleted"
-	SuccessfulRunReason = "Successful"
-	FailedRunReason     = "Failed"
-	PendingReason       = "Pending"
-	JobNotFoundReason   = "JobNotFound"
-)
-
 type JobStatus struct {
 	config *v12.ConfigMap
 }
@@ -85,13 +77,13 @@ func getConditions(job *v1.Job) []v13.Condition {
 
 func (r *JobStatus) LastStatus(ctx context.Context, kc client.Client) v13.Condition {
 	condition := v13.Condition{
-		Type:   JobStatusType,
+		Type:   constants.JobStatusType,
 		Status: v13.ConditionFalse,
 	}
 
 	job, err := r.latestJob(ctx, kc)
 	if job == nil {
-		condition.Reason = JobNotFoundReason
+		condition.Reason = constants.JobNotFoundReason
 
 		if err != nil {
 			condition.Message = err.Error()
@@ -104,7 +96,7 @@ func (r *JobStatus) LastStatus(ctx context.Context, kc client.Client) v13.Condit
 
 	c, ok := apis.GetLastCondition(getConditions(job))
 	if !ok {
-		condition.Reason = PendingReason
+		condition.Reason = constants.PendingReason
 		return condition
 	}
 
@@ -113,9 +105,9 @@ func (r *JobStatus) LastStatus(ctx context.Context, kc client.Client) v13.Condit
 	}
 
 	if c.Type == string(v1.JobComplete) && c.Status == v13.ConditionTrue {
-		condition.Reason = SuccessfulRunReason
+		condition.Reason = constants.SuccessfulRunReason
 	} else if c.Type == string(v1.JobFailed) && c.Status == v13.ConditionTrue {
-		condition.Reason = FailedRunReason
+		condition.Reason = constants.FailedRunReason
 	} else {
 		condition.Reason = c.Reason
 	}

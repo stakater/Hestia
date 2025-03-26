@@ -1,22 +1,20 @@
 apiVersion: e2e.stakater.com/v1alpha1
 kind: Runner
 metadata:
-  name: runner
+  name: runner-wait
   labels:
     app.kubernetes.io/name: hestia-operator
     app.kubernetes.io/managed-by: kustomize
-    app: runner-1
+    app: runner-2
 spec:
-#  schedule: "* * * * *" # every minute
-  deploymentSelector:
+  runnerSelector:
     matchLabels:
-      app: test
-  deadlineSeconds: 120
+      app: runner-1
   template:
     spec:
       containers:
         - name: example
           image: busybox
           imagePullPolicy: IfNotPresent
-          command: ["sh", "-c", "sleep 10 && echo done && exit 0"]
+          command: [ "sh", "-c", "sleep 10 && echo done && exit 0" ]
       restartPolicy: Never

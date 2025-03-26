@@ -26,7 +26,7 @@ func NewJobConfig(runner *v1alpha1.Runner, scheme *runtime.Scheme) *JobConfig {
 	}
 }
 
-func (r *JobConfig) CreateOrUpdate(ctx context.Context, c client.Client, objects ...unstructured.Unstructured) error {
+func (r *JobConfig) CreateOrUpdate(ctx context.Context, c client.Client, deployments []unstructured.Unstructured, runners []unstructured.Unstructured) error {
 	r.resource = &v1.ConfigMap{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      r.runner.Name,
@@ -41,7 +41,18 @@ func (r *JobConfig) CreateOrUpdate(ctx context.Context, c client.Client, objects
 			constants.OwnerNamespaceLabel: r.runner.Namespace,
 		})
 
-		r.resource.Data = CreateReadinessMap(objects...)
+		readinessMap := make(map[string]string)
+		r.resource.Data = readinessMap
+		if r.runner.Spec.DeploymentSelector != nil {
+			CreateReadinessMap(readinessMap, deployments...)
+			r.resource.Data["deploymentMinimum"] = strconv.FormatBool(len(deployments) > 0)
+		}
+
+		if r.runner.Spec.RunnerSelector != nil {
+			CreateReadinessMap(readinessMap, runners...)
+			r.resource.Data["runnersCountMinimum"] = strconv.FormatBool(len(runners) > 0)
+		}
+
 		r.resource.Data["generation"] = strconv.FormatInt(r.runner.Generation, 10)
 		r.resource.Data["schedule"] = r.runner.Spec.Schedule
 		r.resource.Data["deadline"] = strconv.FormatInt(r.runner.Spec.DeadlineSeconds, 10)

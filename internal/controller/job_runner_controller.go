@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"fmt"
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/constants"
 	"github.com/stakater/hestia-operator/internal/resources"
@@ -15,6 +16,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
+	"strconv"
 )
 
 // JobRunnerReconciler reconciles ConfigMaps and manages Jobs
@@ -30,14 +32,14 @@ type JobRunnerReconciler struct {
 
 // Reconcile is part of the main kubernetes reconciliation loop
 func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	logger := log.FromContext(ctx)
-	logger.WithName(req.NamespacedName.String()).Info("Reconciling...")
+	logger := log.Log.WithName(fmt.Sprintf("[Jobrunner] %s", req.NamespacedName))
+	logger.Info("Reconciling...")
 
-	// Check if this is a ConfigMap reconciliation
+	// Fetch job config
 	var configMap corev1.ConfigMap
 	err := r.Get(ctx, req.NamespacedName, &configMap)
 
-	// If neither was found, it was likely deleted
+	// If not found return
 	if err != nil {
 		if errors.IsNotFound(err) {
 			return ctrl.Result{}, nil
@@ -46,6 +48,14 @@ func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
+	// Ensure the configMap registers is ready for all boolean keys
+	for _, v := range configMap.Data {
+		if v == strconv.FormatBool(false) {
+			return ctrl.Result{}, nil
+		}
+	}
+
+	// Fetch related runner
 	var runner v1alpha1.Runner
 	err = r.Get(ctx, client.ObjectKey{
 		Namespace: configMap.Labels[constants.OwnerNamespaceLabel],
@@ -58,8 +68,9 @@ func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 	jobResource := resources.NewJobResource(&runner, &configMap, r.Scheme)
 	cronJobResource := resources.NewScheduledJobResource(&runner, &configMap, r.Scheme)
-
 	var lastStatus v12.Condition
+
+	// Handle a non-scheduled job
 	if runner.Spec.Schedule == "" {
 		err = cronJobResource.RemoveJob(ctx, r.Client)
 		if err != nil {
@@ -73,6 +84,7 @@ func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 
 		lastStatus = jobResource.LastStatus(ctx, r.Client)
 	} else {
+		// Handle a scheduled job
 		err = jobResource.RemoveAll(ctx, r.Client, func(obj batchv1.Job) bool {
 			for _, reference := range obj.OwnerReferences {
 				if reference.Kind == "CronJob" {
@@ -91,17 +103,19 @@ func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 			return ctrl.Result{}, err
 		}
 
-		lastStatus = jobResource.LastStatus(ctx, r.Client)
+		lastStatus = cronJobResource.LastStatus(ctx, r.Client)
 	}
 
-	return r.PatchReadyStatus(ctx, runner, lastStatus)
+	// Update job-run status
+	return r.PatchRunnerJobStatus(ctx, runner, lastStatus)
 }
 
-func (r *JobRunnerReconciler) PatchReadyStatus(ctx context.Context, cr v1alpha1.Runner, condition v12.Condition) (ctrl.Result, error) {
-	if condition.Type == resources.JobStatusType {
-		if condition.Reason == resources.SuccessfulRunReason {
+// PatchRunnerJobStatus updates runner with latest job status based on executed final conditions
+func (r *JobRunnerReconciler) PatchRunnerJobStatus(ctx context.Context, cr v1alpha1.Runner, condition v12.Condition) (ctrl.Result, error) {
+	if condition.Type == constants.JobStatusType {
+		if condition.Reason == constants.SuccessfulRunReason {
 			cr.Status.LastSuccessfulRun = v12.Now()
-		} else if condition.Reason == resources.FailedRunReason {
+		} else if condition.Reason == constants.FailedRunReason {
 			cr.Status.LastFailedRun = v12.Now()
 		}
 	}
@@ -115,17 +129,10 @@ func (r *JobRunnerReconciler) PatchReadyStatus(ctx context.Context, cr v1alpha1.
 	return ctrl.Result{}, nil
 }
 
-func (r *JobRunnerReconciler) HandleSuccess(ctx context.Context, cr *v1alpha1.Runner) (ctrl.Result, error) {
-	original := cr.DeepCopy()
-	cr.Status.Conditions.SetReady(v12.ConditionTrue)
-	return ctrl.Result{}, r.Status().Patch(ctx, original, client.MergeFrom(cr))
-}
-
 // SetupWithManager sets up the controller with the Manager.
 func (r *JobRunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
-		For(&corev1.ConfigMap{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&batchv1.Job{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
-		Owns(&batchv1.CronJob{}, builder.WithPredicates(predicate.GenerationChangedPredicate{})).
+		For(&corev1.ConfigMap{}, builder.WithPredicates(predicate.ResourceVersionChangedPredicate{})).
+		Owns(&batchv1.Job{}).
 		Complete(r)
 }
