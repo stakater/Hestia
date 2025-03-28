@@ -1,5 +1,5 @@
 /*
-Copyright 2024.
+Copyright 2025.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package utils
 
 import (
 	"fmt"
+	"github.com/onsi/gomega"
 	"os"
 	"os/exec"
 	"strings"
@@ -25,94 +26,38 @@ import (
 	. "github.com/onsi/ginkgo/v2" //nolint:golint,revive
 )
 
-const (
-	prometheusOperatorVersion = "v0.72.0"
-	prometheusOperatorURL     = "https://github.com/prometheus-operator/prometheus-operator/" +
-		"releases/download/%s/bundle.yaml"
-
-	certmanagerVersion = "v1.14.4"
-	certmanagerURLTmpl = "https://github.com/jetstack/cert-manager/releases/download/%s/cert-manager.yaml"
-)
-
 func warnError(err error) {
-	fmt.Fprintf(GinkgoWriter, "warning: %v\n", err)
-}
-
-// InstallPrometheusOperator installs the prometheus Operator to be used to export the enabled metrics.
-func InstallPrometheusOperator() error {
-	url := fmt.Sprintf(prometheusOperatorURL, prometheusOperatorVersion)
-	cmd := exec.Command("kubectl", "create", "-f", url)
-	_, err := Run(cmd)
-	return err
+	_, _ = fmt.Fprintf(GinkgoWriter, "warning: %v\n", err)
 }
 
 // Run executes the provided command within this context
-func Run(cmd *exec.Cmd) ([]byte, error) {
+func Run(name string, args ...string) string {
 	dir, _ := GetProjectDir()
+	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 
 	if err := os.Chdir(cmd.Dir); err != nil {
-		fmt.Fprintf(GinkgoWriter, "chdir dir: %s\n", err)
+		_, _ = fmt.Fprintf(GinkgoWriter, "chdir dir: %s\n", err)
 	}
 
 	cmd.Env = append(os.Environ(), "GO111MODULE=on")
 	command := strings.Join(cmd.Args, " ")
-	fmt.Fprintf(GinkgoWriter, "running: %s\n", command)
+	_, _ = fmt.Fprintf(GinkgoWriter, "running: %s\n", command)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return output, fmt.Errorf("%s failed with error: (%v) %s", command, err, string(output))
+		gomega.ExpectWithOffset(1, err).NotTo(gomega.HaveOccurred(), fmt.Sprintf("%s failed with error: (%v) %s", command, err.Error(), string(output)))
 	}
 
-	return output, nil
+	return strings.TrimSpace(string(output))
 }
 
-// UninstallPrometheusOperator uninstalls the prometheus
-func UninstallPrometheusOperator() {
-	url := fmt.Sprintf(prometheusOperatorURL, prometheusOperatorVersion)
-	cmd := exec.Command("kubectl", "delete", "-f", url)
-	if _, err := Run(cmd); err != nil {
-		warnError(err)
-	}
+func RunShell(args ...string) string {
+	return Run("sh", "-c", strings.Join(args, " "))
 }
 
-// UninstallCertManager uninstalls the cert manager
-func UninstallCertManager() {
-	url := fmt.Sprintf(certmanagerURLTmpl, certmanagerVersion)
-	cmd := exec.Command("kubectl", "delete", "-f", url)
-	if _, err := Run(cmd); err != nil {
-		warnError(err)
-	}
-}
-
-// InstallCertManager installs the cert manager bundle.
-func InstallCertManager() error {
-	url := fmt.Sprintf(certmanagerURLTmpl, certmanagerVersion)
-	cmd := exec.Command("kubectl", "apply", "-f", url)
-	if _, err := Run(cmd); err != nil {
-		return err
-	}
-	// Wait for cert-manager-webhook to be ready, which can take time if cert-manager
-	// was re-installed after uninstalling on a cluster.
-	cmd = exec.Command("kubectl", "wait", "deployment.apps/cert-manager-webhook",
-		"--for", "condition=Available",
-		"--namespace", "cert-manager",
-		"--timeout", "5m",
-	)
-
-	_, err := Run(cmd)
-	return err
-}
-
-// LoadImageToKindCluster loads a local docker image to the kind cluster
-func LoadImageToKindClusterWithName(name string) error {
-	cluster := "kind"
-	if v, ok := os.LookupEnv("KIND_CLUSTER"); ok {
-		cluster = v
-	}
-	kindOptions := []string{"load", "docker-image", name, "--name", cluster}
-	cmd := exec.Command("kind", kindOptions...)
-	_, err := Run(cmd)
-	return err
+func SetShellENV(env string, value string) {
+	err := os.Setenv(env, value)
+	gomega.ExpectWithOffset(1, err).NotTo(gomega.HaveOccurred())
 }
 
 // GetNonEmptyLines converts given command output string into individual objects

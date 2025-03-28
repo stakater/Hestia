@@ -3,6 +3,6 @@ resources:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- name: controller
-  newName: ghcr.io/stakater/hestia-operator
-  newTag: v0.0.1
+- digest: sha256:fa853479b90d431121ae91b707f7826d6456510f2557abf48d2e2dac30f370cf
+  name: controller
+  newName: image-registry.openshift-image-registry.svc:5000/hestia-operator-system/hestia-operator
