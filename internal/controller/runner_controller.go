@@ -53,7 +53,8 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners/status,verbs=get;update;patch
 //+kubebuilder:rbac:groups=e2e.stakater.com,resources=runners/finalizers,verbs=update
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
-//+kubebuilder:rbac:groups="*",resources="*/status",verbs=get;list;watch
+//+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch
+//+kubebuilder:rbac:groups=apps.openshift.io,resources=deploymentconfigs,verbs=get;list;watch
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = log.Log.WithName(fmt.Sprintf("[Runner] %s", req.NamespacedName))

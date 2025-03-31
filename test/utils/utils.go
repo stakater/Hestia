@@ -83,3 +83,9 @@ func GetProjectDir() (string, error) {
 	wd = strings.Replace(wd, "/test/e2e", "", -1)
 	return wd, nil
 }
+
+func AssertError(err error, msg ...string) {
+	if err != nil {
+		gomega.Expect(err).NotTo(gomega.HaveOccurred(), fmt.Sprintf("[%s] %s", err.Error(), strings.Join(msg, " ")))
+	}
+}

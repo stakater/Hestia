@@ -18,12 +18,14 @@ package e2e
 
 import (
 	"fmt"
+	"github.com/gkampitakis/go-snaps/snaps"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/test/utils"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
+	"os"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -36,6 +38,31 @@ import (
 var cfg *rest.Config
 var k8sClient client.Client
 var testEnv *envtest.Environment
+
+func TestMain(m *testing.M) {
+	// Setup before any tests run
+	setup()
+
+	// Run all tests and get exit code
+	code := m.Run()
+
+	// Teardown after all tests finish
+	teardown(m)
+
+	// Exit with the same code
+	os.Exit(code)
+}
+
+// Setup function - called before all tests
+func setup() {
+	// Global test setup
+}
+
+// Teardown function - called after all tests
+func teardown(m *testing.M) {
+	// Global test teardown
+	snaps.Clean(m)
+}
 
 const operatorNamespace = "hestia-operator-system"
 const imageStream = "e2e"
@@ -92,9 +119,9 @@ var _ = BeforeSuite(func() {
 		"{\"spec\":{\"defaultRoute\":true}}")
 	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
-	//By("creating image-stream")
-	//_ = utils.Run("sh", "-c", fmt.Sprintf("oc create is %s || echo 'Image-stream already exists'", imageStream))
-	//ExpectWithOffset(1, err).NotTo(HaveOccurred())
+	By("creating image-stream")
+	_ = utils.Run("sh", "-c", fmt.Sprintf("oc create is %s || echo 'Image-stream already exists'", imageStream))
+	ExpectWithOffset(1, err).NotTo(HaveOccurred())
 
 	By("fetch the image-stream route path")
 	output := utils.Run("oc", "get", "route", "default-route", "-n", "openshift-image-registry", "--template={{ .spec.host }}")

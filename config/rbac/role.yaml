@@ -5,9 +5,18 @@ metadata:
   name: manager-role
 rules:
 - apiGroups:
-  - '*'
+  - apps
   resources:
-  - '*/status'
+  - deployments
+  - statefulsets
+  verbs:
+  - get
+  - list
+  - watch
+- apiGroups:
+  - apps.openshift.io
+  resources:
+  - deploymentconfigs
   verbs:
   - get
   - list
@@ -26,13 +35,29 @@ rules:
   - update
   - watch
 - apiGroups:
+  - batch
+  resources:
+  - jobs/finalizers
+  verbs:
+  - update
+- apiGroups:
   - ""
   resources:
   - configmaps
   verbs:
+  - create
+  - delete
   - get
   - list
+  - patch
+  - update
   - watch
+- apiGroups:
+  - ""
+  resources:
+  - configmaps/finalizers
+  verbs:
+  - update
 - apiGroups:
   - e2e.stakater.com
   resources:

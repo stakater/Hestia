@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .name }}
+  labels:
+    app: e2e-deployment
+    runner.stakater.com/enable: "true"
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: e2e-deployment
+  template:
+    metadata:
+      labels:
+        app: e2e-deployment
+    spec:
+      initContainers:
+        - name: readiness-delay-{{ .readinessDelay }}
+          image: busybox:1.36.1
+          command: ["sh", "-c", "trap 'echo \"Init container received SIGTERM, shutting down...\"; exit 0' TERM; echo 'Init container starting, will wait exactly {{ .readinessDelay }} seconds'; sleep {{ .readinessDelay }}; echo 'Init container completed'"]
+      containers:
+        - name: busybox
+          image: busybox:1.36.1
+          command: ["sh", "-c", "echo 'Main container starting'; trap 'echo \"Received SIGTERM, shutting down...\"; exit 0' TERM; while true; do sleep 10; done"]
+          resources:
+            requests:
+              cpu: 1m
+              memory: 24Mi
+            limits:
+              cpu: 5m
+              memory: 64Mi
