@@ -21,6 +21,7 @@ import (
 	"github.com/onsi/gomega"
 	"os"
 	"os/exec"
+	"reflect"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:golint,revive
@@ -88,4 +89,12 @@ func AssertError(err error, msg ...string) {
 	if err != nil {
 		gomega.Expect(err).NotTo(gomega.HaveOccurred(), fmt.Sprintf("[%s] %s", err.Error(), strings.Join(msg, " ")))
 	}
+}
+
+func GetKind(obj interface{}) string {
+	t := reflect.TypeOf(obj)
+	if t.Kind() == reflect.Ptr {
+		t = t.Elem()
+	}
+	return t.Name()
 }
