@@ -14,54 +14,55 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-const runner_ns = "hestia-instance"
-const deployment1_ns = "hestia-deployment-1"
-const deployment2_ns = "hestia-deployment-2"
-
 var _ = Describe("controller", Ordered, func() {
+	const runnerNs = "hestia-deployment-config-instance"
+	const dcf1Ns = "hestia-deployment-config-1"
+	const dcf2Ns = "hestia-deployment-config-2"
+
 	BeforeAll(func() {
-		By("creating manager namespace")
-		for _, ns := range []string{runner_ns, deployment1_ns, deployment2_ns} {
-			_ = utils.RunShell("oc", "new-project", ns, "||", "oc", "project", ns)
+		By("creating namespaces")
+		for _, ns := range []string{runnerNs, dcf1Ns, dcf2Ns} {
+			_, err := utils.RunShell("oc", "new-project", ns, "||", "oc", "project", ns)
+			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 
 	AfterAll(func() {
-		By("removing manager namespace")
-		By("creating manager namespace")
-		for _, ns := range []string{runner_ns, deployment1_ns, deployment2_ns} {
-			_ = utils.Run("oc", "delete", "project", ns)
+		By("removing namespaces")
+		for _, ns := range []string{runnerNs, dcf1Ns, dcf2Ns} {
+			_, err := utils.Run("oc", "delete", "project", ns)
+			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 
 	Context("operator", func() {
-		It("should watch deployments", func() {
-			By("creating deployment 1 in namespace")
+		It("should watch deployment-config", func() {
+			By("creating deployment-config 1 in namespace")
 			replacements := map[string]string{
-				"name":           "deployment-1",
+				"name":           "deployment-config-1",
 				"readinessDelay": "1",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/busybox.yaml", deployment1_ns, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf1Ns, replacements)
 
-			By("creating deployment 2 in namespace")
+			By("creating deployment-config 2 in namespace")
 			replacements = map[string]string{
-				"name":           "deployment-2",
+				"name":           "deployment-config-2",
 				"readinessDelay": "2",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/busybox.yaml", deployment2_ns, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf2Ns, replacements)
 
 			By("creating runner")
 			replacements = map[string]string{
-				"name":        "runner",
+				"name":        "deployment-config-runner",
 				"jobDuration": "1",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/runner.yaml", runner_ns, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/runner.yaml", runnerNs, replacements)
 
 			By("validate runner to be reconciled")
 			runner := &v1alpha1.Runner{
 				ObjectMeta: v12.ObjectMeta{
 					Name:      replacements["name"],
-					Namespace: runner_ns,
+					Namespace: runnerNs,
 				},
 			}
 			utils.WaitForResource(runner, func() bool {
@@ -69,11 +70,11 @@ var _ = Describe("controller", Ordered, func() {
 			}, "60s", "1s")
 			utils.MatchYAMLResource(runner, "reconciled")
 
-			By("validate job-config get created and track deployment readiness")
+			By("validate job-config get created and track deployment-config readiness")
 			jobConfig := &v13.ConfigMap{
 				ObjectMeta: v12.ObjectMeta{
 					Name:      replacements["name"],
-					Namespace: runner_ns,
+					Namespace: runnerNs,
 				},
 			}
 			utils.WaitForResource(jobConfig, func() bool {

@@ -32,13 +32,14 @@ func warnError(err error) {
 }
 
 // Run executes the provided command within this context
-func Run(name string, args ...string) string {
+func Run(name string, args ...string) (string, error) {
 	dir, _ := GetProjectDir()
 	cmd := exec.Command(name, args...)
 	cmd.Dir = dir
 
 	if err := os.Chdir(cmd.Dir); err != nil {
 		_, _ = fmt.Fprintf(GinkgoWriter, "chdir dir: %s\n", err)
+		return "", fmt.Errorf("chdir dir: %s\n", err.Error())
 	}
 
 	cmd.Env = append(os.Environ(), "GO111MODULE=on")
@@ -46,19 +47,18 @@ func Run(name string, args ...string) string {
 	_, _ = fmt.Fprintf(GinkgoWriter, "running: %s\n", command)
 	output, err := cmd.CombinedOutput()
 	if err != nil {
-		gomega.ExpectWithOffset(1, err).NotTo(gomega.HaveOccurred(), fmt.Sprintf("%s failed with error: (%v) %s", command, err.Error(), string(output)))
+		return "", fmt.Errorf("%s failed with error: (%v) %s", command, err.Error(), string(output))
 	}
 
-	return strings.TrimSpace(string(output))
+	return strings.TrimSpace(string(output)), nil
 }
 
-func RunShell(args ...string) string {
+func RunShell(args ...string) (string, error) {
 	return Run("sh", "-c", strings.Join(args, " "))
 }
 
-func SetShellENV(env string, value string) {
-	err := os.Setenv(env, value)
-	gomega.ExpectWithOffset(1, err).NotTo(gomega.HaveOccurred())
+func SetShellENV(env string, value string) error {
+	return os.Setenv(env, value)
 }
 
 // GetNonEmptyLines converts given command output string into individual objects

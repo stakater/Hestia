@@ -3,17 +3,18 @@ kind: StatefulSet
 metadata:
   name: {{ .name }}
   labels:
-    app: e2e
+    app: e2e-statefulset
+    runner.stakater.com/enable: "true"
 spec:
   serviceName: "e2e"
   replicas: 1
   selector:
     matchLabels:
-      app: e2e
+      app: e2e-statefulset
   template:
     metadata:
       labels:
-        app: e2e
+        app: e2e-statefulset
     spec:
       initContainers:
         - name: readiness-delay-{{ .readinessDelay }}

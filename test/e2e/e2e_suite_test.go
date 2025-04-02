@@ -45,30 +45,30 @@ func TestMain(m *testing.M) {
 // Setup function - called before all tests
 func setup() {
 	// Global test setup
+	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
+	utils.TestEnvironment = utils.NewE2ETestEnv("hestia")
+	err := utils.TestEnvironment.Setup()
+	if err != nil {
+		fmt.Printf("Test setup failed: %v\n", err)
+		os.Exit(1)
+	}
 }
 
 // Teardown function - called after all tests
 func teardown(m *testing.M) {
 	// Global test teardown
 	snaps.Clean(m)
+	err := utils.TestEnvironment.Teardown()
+	if err != nil {
+		// Log the error
+		GinkgoWriter.Println(fmt.Sprintf("Test teardown failed: %v", err.Error()))
+		os.Exit(1)
+	}
 }
 
 // Run e2e tests using the Ginkgo runner.
 func TestE2E(t *testing.T) {
 	RegisterFailHandler(Fail)
-	fmt.Fprintf(GinkgoWriter, "Starting hestia-operator suite\n")
+	GinkgoWriter.Println("Starting hestia-operator suite")
 	RunSpecs(t, "e2e suite")
 }
-
-var _ = BeforeSuite(func() {
-	logf.SetLogger(zap.New(zap.WriteTo(GinkgoWriter), zap.UseDevMode(true)))
-
-	By("bootstrapping test environment")
-	utils.TestEnvironment = utils.NewE2ETestEnv("hestia")
-	utils.TestEnvironment.Setup()
-})
-
-var _ = AfterSuite(func() {
-	By("tearing down the test environment")
-	utils.TestEnvironment.Teardown()
-})

@@ -3,15 +3,15 @@ kind: Runner
 metadata:
   name: {{ .name }}
   labels:
-    app: runner-1
+    app: statefulset-runner
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-deployment
+      app: e2e-statefulset
   template:
     spec:
       containers:
-        - name: deployment-job
+        - name: statefulset-job
           image: busybox
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "sleep {{ .jobDuration }} && echo done && exit 0"]

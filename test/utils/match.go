@@ -26,6 +26,7 @@ var excludeFields = []string{
 	"$.status.conditions[*].lastTransitionTime",
 	"$.status.conditions[*].lastProbeTime",
 	"$.status.lastSuccessfulRunTime",
+	"$.status.uncountedTerminatedPods",
 }
 
 func replaceMapValue(val any) {

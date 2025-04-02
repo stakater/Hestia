@@ -2,8 +2,7 @@ package utils
 
 import (
 	"fmt"
-	. "github.com/onsi/ginkgo/v2"
-	. "github.com/onsi/gomega"
+	"github.com/onsi/ginkgo/v2"
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
@@ -37,7 +36,7 @@ func NewE2ETestEnv(operatorName string) *E2ETestEnv {
 	return env
 }
 
-func (env *E2ETestEnv) Setup() {
+func (env *E2ETestEnv) Setup() error {
 	env.Environment = &envtest.Environment{
 		// Set to true to use an existing cluster
 		UseExistingCluster: &[]bool{true}[0],
@@ -45,71 +44,117 @@ func (env *E2ETestEnv) Setup() {
 
 	var err error
 	env.restConfig, err = env.Environment.Start()
-	Expect(err).NotTo(HaveOccurred())
-	Expect(env.restConfig).NotTo(BeNil())
+	if err != nil || env.restConfig == nil {
+		return fmt.Errorf("failed to setup rest-config")
+	}
 
 	err = v1alpha1.AddToScheme(scheme.Scheme)
-	Expect(err).NotTo(HaveOccurred())
+	if err != nil {
+		return fmt.Errorf("failed to setup scheme: %s", err.Error())
+	}
 
 	// Create a client for the test
 	env.K8sClient, err = client.New(env.restConfig, client.Options{Scheme: scheme.Scheme})
-	Expect(err).NotTo(HaveOccurred())
-	Expect(env.K8sClient).NotTo(BeNil())
+	if err != nil || env.K8sClient == nil {
+		return fmt.Errorf("failed to setup K8sClient: %s", err.Error())
+	}
 
 	// Create namespace for the operator
-	By("creating manager namespace")
-	_ = Run("sh", "-c", fmt.Sprintf("oc new-project %s || oc project %s", env.operatorNamespace, env.operatorNamespace))
+	ginkgo.GinkgoWriter.Println("creating operator namespace")
+	_, err = Run("sh", "-c", fmt.Sprintf("oc new-project %s || oc project %s", env.operatorNamespace, env.operatorNamespace))
+	if err != nil {
+		return fmt.Errorf("failed to create operator namespace: %s", err.Error())
+	}
 
 	// Create user for pushing images
-	By("creating docker user")
-	Run("sh", "-c", fmt.Sprintf("oc create serviceaccount %s || echo 'Service account already exists'", env.dockerUSer))
+	ginkgo.GinkgoWriter.Println("creating docker user")
+	_, err = Run("sh", "-c", fmt.Sprintf("oc create serviceaccount %s || echo 'Service account already exists'", env.dockerUSer))
+	if err != nil {
+		return fmt.Errorf("failed to create docker user: %s", err.Error())
+	}
 
-	By("grant docker user permissions")
-	Run("oc", "policy", "add-role-to-user", "system:image-builder", "-z", env.dockerUSer)
+	ginkgo.GinkgoWriter.Println("grant docker user permissions")
+	_, err = Run("oc", "policy", "add-role-to-user", "system:image-builder", "-z", env.dockerUSer)
+	if err != nil {
+		return fmt.Errorf("failed to grant docker user permissions: %s", err.Error())
+	}
 
-	By("patch image-stream default route")
-	_ = Run("oc",
+	ginkgo.GinkgoWriter.Println("patch image-stream default route")
+	_, err = Run("oc",
 		"patch",
 		"configs.imageregistry.operator.openshift.io/cluster",
 		"--type=merge",
 		"-p",
 		"{\"spec\":{\"defaultRoute\":true}}")
+	if err != nil {
+		return fmt.Errorf("failed to patch image-stream default route: %s", err.Error())
+	}
 
-	By("creating image-stream")
-	_ = Run("sh", "-c", fmt.Sprintf("oc create is %s || echo 'Image-stream already exists'", env.imageStream))
+	ginkgo.GinkgoWriter.Println("creating image-stream")
+	_, err = Run("sh", "-c", fmt.Sprintf("oc create is %s || echo 'Image-stream already exists'", env.imageStream))
+	if err != nil {
+		return fmt.Errorf("failed to create image-stream: %s", err.Error())
+	}
 
-	By("fetch the image-stream route path")
-	output := Run("oc", "get", "route", "default-route", "-n", "openshift-image-registry", "--template={{ .spec.host }}")
+	ginkgo.GinkgoWriter.Println("fetch the image-stream route path")
+	output, err := Run("oc", "get", "route", "default-route", "-n", "openshift-image-registry", "--template={{ .spec.host }}")
 	route := strings.TrimSpace(output)
+	if err != nil {
+		return fmt.Errorf("failed to fetch image-stream route: %s", err.Error())
+	}
 
-	By("create sa token")
-	output = Run("oc", "create", "token", env.dockerUSer, "-n", env.operatorNamespace)
-	SetShellENV("SA_TOKEN", output)
+	ginkgo.GinkgoWriter.Println("create sa token")
+	output, err = Run("oc", "create", "token", env.dockerUSer, "-n", env.operatorNamespace)
+	if err != nil {
+		return fmt.Errorf("failed to create sa token: %s", err.Error())
+	}
+	err = SetShellENV("SA_TOKEN", output)
+	if err != nil {
+		return fmt.Errorf("failed to set sa token ENV: %s", err.Error())
+	}
 
-	By("login to image-stream")
-	output = RunShell("docker", "login", "-u", env.dockerUSer, "-p $SA_TOKEN", route)
+	ginkgo.GinkgoWriter.Println("login to image-stream")
+	output, err = RunShell("docker", "login", "-u", env.dockerUSer, "-p $SA_TOKEN", route)
+	if err != nil {
+		return fmt.Errorf("failed to login to image-stream: %s", err.Error())
+	}
 
 	var e2eTestimage = fmt.Sprintf("%s/%s/%s:%s", route, env.operatorNamespace, env.imageName, env.imageTag)
-	By("building the manager(Operator) image")
-	_ = Run("make", "docker-build", fmt.Sprintf("IMG=%s", e2eTestimage))
+	ginkgo.GinkgoWriter.Println("building the manager(Operator) image")
+	_, err = Run("make", "docker-build", fmt.Sprintf("IMG=%s", e2eTestimage))
+	if err != nil {
+		return fmt.Errorf("failed to build operator image: %s", err.Error())
+	}
 
-	By("push the manager(Operator) image to image-stream")
-	_ = RunShell("docker", "push", e2eTestimage)
+	ginkgo.GinkgoWriter.Println("push the manager(Operator) image to image-stream")
+	_, err = RunShell("docker", "push", e2eTestimage)
+	if err != nil {
+		return fmt.Errorf("failed to push operator image: %s", err.Error())
+	}
 
-	By("get the image url for direct referencing")
-	output = RunShell("oc", "get", "istag", fmt.Sprintf("%s:%s", env.imageName, env.imageTag), "-o", "jsonpath='{.image.dockerImageReference}'")
+	ginkgo.GinkgoWriter.Println("get the image url for direct referencing")
+	output, err = RunShell("oc", "get", "istag", fmt.Sprintf("%s:%s", env.imageName, env.imageTag), "-o", "jsonpath='{.image.dockerImageReference}'")
+	if err != nil {
+		return fmt.Errorf("failed to fetch pushed image url: %s", err.Error())
+	}
 
-	By("installing CRDs")
-	_ = Run("make", "install")
+	ginkgo.GinkgoWriter.Println("installing CRDs")
+	_, err = Run("make", "install")
+	if err != nil {
+		return fmt.Errorf("failed to install operator CRDs: %s", err.Error())
+	}
 
-	By("deploying the controller-manager")
-	_ = Run("make", "deploy", fmt.Sprintf("IMG=%s", output))
+	ginkgo.GinkgoWriter.Println("deploying the operator")
+	_, err = Run("make", "deploy", fmt.Sprintf("IMG=%s", output))
+	if err != nil {
+		return fmt.Errorf("failed to deploy operator: %s", err.Error())
+	}
 
-	By("validating that the controller-manager pod is running as expected")
+	ginkgo.GinkgoWriter.Println("validating that the controller-manager pod is running as expected")
 	verifyControllerUp := func() error {
 		// Get pod name
 
-		podOutput := Run("oc", "get",
+		podOutput, err := Run("oc", "get",
 			"pods", "-l", "control-plane=controller-manager",
 			"-o", "go-template={{ range .items }}"+
 				"{{ if not .metadata.deletionTimestamp }}"+
@@ -118,29 +163,61 @@ func (env *E2ETestEnv) Setup() {
 			"-n", env.operatorNamespace,
 		)
 
-		podNames := GetNonEmptyLines(string(podOutput))
+		if err != nil {
+			return err
+		}
+
+		podNames := GetNonEmptyLines(podOutput)
 		if len(podNames) != 1 {
 			return fmt.Errorf("expect 1 controller pods running, but got %d", len(podNames))
 		}
 		controllerPodName := podNames[0]
-		ExpectWithOffset(2, controllerPodName).Should(ContainSubstring("controller-manager"))
+		if !strings.Contains(controllerPodName, "controller-manager") {
+			return fmt.Errorf("pod should contain 'controller-manager', but got %s", controllerPodName)
+		}
 
 		// Validate pod status
-		status := Run("oc", "get",
+		status, err := Run("oc", "get",
 			"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
 			"-n", env.operatorNamespace,
 		)
-		if string(status) != "Running" {
+		if err != nil || string(status) != "Running" {
 			return fmt.Errorf("controller pod in %s status", status)
 		}
 		return nil
 	}
-	EventuallyWithOffset(1, verifyControllerUp, time.Minute, time.Second).Should(Succeed())
+
+	var lastErr error
+	defer func() {
+		deadline := time.Now().Add(time.Minute)
+
+		// Track the last error to return if we time out
+		var lastErr error
+
+		// Retry loop
+		for time.Now().Before(deadline) {
+			// Try running the function
+			err := verifyControllerUp()
+			if err == nil {
+				return
+			}
+
+			// Store the error and try again after the interval
+			lastErr = err
+
+			// Sleep for the interval
+			time.Sleep(time.Second)
+		}
+
+		// If we get here, we timed out
+		lastErr = fmt.Errorf("timed out after %s: %w", time.Minute, lastErr)
+	}()
+
+	return lastErr
 }
 
-func (env *E2ETestEnv) Teardown() {
-	err := env.Environment.Stop()
-	Expect(err).NotTo(HaveOccurred())
+func (env *E2ETestEnv) Teardown() error {
+	return env.Environment.Stop()
 }
 
 var TestEnvironment *E2ETestEnv
