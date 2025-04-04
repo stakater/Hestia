@@ -1,24 +1,24 @@
 
-[controller operator should watch statefulsets - 1]
+[controller operator should watch and schedule job for deployment - 1]
 metadata:
-  name: statefulsets-runner
-  namespace: hestia-statefulset-instance
+  name: cron-deploy-runner
+  namespace: hestia-cron-deploy
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: e2e-statefulset
+    app: cron-deploy-job
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-statefulset
+      app: cron-deploy-job
   template:
     spec:
       containers:
-        - name: statefulset-job
+        - name: e2e-cron-deploy
           image: busybox
           command:
             - sh
@@ -26,6 +26,8 @@ spec:
             - sleep 1 && echo done && exit 0
           imagePullPolicy: IfNotPresent
       restartPolicy: Never
+  schedule: "* * * * *"
+  deadlineSeconds: 120
 status:
   conditions:
     - type: ReconcileSuccess
@@ -33,5 +35,11 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: ""
+  lastSuccessfulRunTime: <Any value>
 
 ---

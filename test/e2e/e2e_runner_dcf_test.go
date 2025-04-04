@@ -1,6 +1,7 @@
 package e2e
 
 import (
+	"fmt"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/redhat-cop/operator-utils/pkg/util/apis"
@@ -15,9 +16,9 @@ import (
 )
 
 var _ = Describe("controller", Ordered, func() {
-	const runnerNs = "hestia-deployment-config-instance"
-	const dcf1Ns = "hestia-deployment-config-1"
-	const dcf2Ns = "hestia-deployment-config-2"
+	const runnerNs = "hestia-dcf-instance"
+	const dcf1Ns = "hestia-dcf-1"
+	const dcf2Ns = "hestia-dcf-2"
 
 	BeforeAll(func() {
 		By("creating namespaces")
@@ -36,32 +37,35 @@ var _ = Describe("controller", Ordered, func() {
 	})
 
 	Context("operator", func() {
-		It("should watch deployment-config", func() {
-			By("creating deployment-config 1 in namespace")
-			replacements := map[string]string{
-				"name":           "deployment-config-1",
+		It("should run job watching deployment-config", func() {
+			By("creating deployment-config 1")
+			replacements := map[string]interface{}{
+				"name":           "hestia-dcf-1",
 				"readinessDelay": "1",
+				"appLabel":       "dcf-cronjob",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf1Ns, replacements)
 
-			By("creating deployment-config 2 in namespace")
-			replacements = map[string]string{
-				"name":           "deployment-config-2",
+			By("creating deployment-config 2")
+			replacements = map[string]interface{}{
+				"name":           "hestia-dcf-2",
 				"readinessDelay": "2",
+				"appLabel":       "dcf-cronjob",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf2Ns, replacements)
 
 			By("creating runner")
-			replacements = map[string]string{
-				"name":        "deployment-config-runner",
+			replacements = map[string]interface{}{
+				"name":        "hestia-dcf-runner",
 				"jobDuration": "1",
+				"appLabel":    "dcf-cronjob",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/runner.yaml", runnerNs, replacements)
 
-			By("validate runner to be reconciled")
+			By("validate runner reconcile")
 			runner := &v1alpha1.Runner{
 				ObjectMeta: v12.ObjectMeta{
-					Name:      replacements["name"],
+					Name:      fmt.Sprintf("%s", replacements["name"]),
 					Namespace: runnerNs,
 				},
 			}
@@ -70,10 +74,10 @@ var _ = Describe("controller", Ordered, func() {
 			}, "60s", "1s")
 			utils.MatchYAMLResource(runner, "reconciled")
 
-			By("validate job-config get created and track deployment-config readiness")
+			By("validate job-config and track readiness")
 			jobConfig := &v13.ConfigMap{
 				ObjectMeta: v12.ObjectMeta{
-					Name:      replacements["name"],
+					Name:      fmt.Sprintf("%s", replacements["name"]),
 					Namespace: runnerNs,
 				},
 			}
@@ -89,10 +93,10 @@ var _ = Describe("controller", Ordered, func() {
 
 					return true
 				}
-			}, "60s", "1s")
+			}, "2m", "1s")
 			utils.MatchYAMLResource(jobConfig)
 
-			By("validate job get run once ready")
+			By("validate job execution")
 			jobs := &v1.JobList{}
 			utils.WaitForResources(jobs, &client.ListOptions{
 				LabelSelector: labels.SelectorFromSet(map[string]string{
@@ -114,12 +118,12 @@ var _ = Describe("controller", Ordered, func() {
 				return true
 			}, "60s", "1s")
 			Expect(jobs.Items).To(HaveLen(1))
-			utils.MatchYAMLResource(&jobs.Items[0], jobConfig.Name, "job", "execution")
+			utils.MatchYAMLResource(&jobs.Items[0], "execution")
 
-			By("validate runner to report job run condition")
+			By("validate runner job status")
 			utils.WaitForResource(runner, func() bool {
-				_, ok := apis.GetCondition(constants.JobStatusType, runner.Status.Conditions.Conditions)
-				return ok
+				condition, ok := apis.GetCondition(constants.JobStatusType, runner.Status.Conditions.Conditions)
+				return ok && condition.Status == v12.ConditionTrue
 			}, "60s", "1s")
 			utils.MatchYAMLResource(runner, "reported")
 		})

@@ -1,24 +1,24 @@
 
-[controller operator should watch statefulsets - 1]
+[controller operator should watch and schedule job for deployment-config - 1]
 metadata:
-  name: statefulsets-runner
-  namespace: hestia-statefulset-instance
+  name: dcf-cron-runner
+  namespace: hestia-dcf-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: e2e-statefulset
+    app: dcf-job
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-statefulset
+      app: dcf-job
   template:
     spec:
       containers:
-        - name: statefulset-job
+        - name: e2e-dcf-cron
           image: busybox
           command:
             - sh
@@ -26,6 +26,8 @@ spec:
             - sleep 1 && echo done && exit 0
           imagePullPolicy: IfNotPresent
       restartPolicy: Never
+  schedule: "* * * * *"
+  deadlineSeconds: 120
 status:
   conditions:
     - type: ReconcileSuccess

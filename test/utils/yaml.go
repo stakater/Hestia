@@ -8,7 +8,7 @@ import (
 	"text/template"
 )
 
-func ApplyFixtureTemplate(templatePath string, namespace string, values map[string]string) string {
+func ApplyFixtureTemplate(templatePath string, namespace string, values map[string]interface{}) string {
 	// Read the template file
 	templateData, err := os.ReadFile(templatePath)
 	AssertError(err)

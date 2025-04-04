@@ -1,5 +1,5 @@
 
-[controller operator should watch deployments - 1]
+[controller operator should schedule job by watching deployments - 1]
 metadata:
   name: <Any value>
   generateName: deployment-runner-

@@ -217,6 +217,12 @@ func (env *E2ETestEnv) Setup() error {
 }
 
 func (env *E2ETestEnv) Teardown() error {
+	ginkgo.GinkgoWriter.Println("deleting operator namespace")
+	_, err := Run("oc", "delete", "project", TestEnvironment.operatorNamespace)
+	if err != nil {
+		return err
+	}
+
 	return env.Environment.Stop()
 }
 

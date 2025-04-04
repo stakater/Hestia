@@ -137,5 +137,6 @@ func (r *JobRunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&corev1.ConfigMap{}, builder.WithPredicates(predicate.ResourceVersionChangedPredicate{})).
 		Owns(&batchv1.Job{}).
+		Owns(&batchv1.CronJob{}).
 		Complete(r)
 }

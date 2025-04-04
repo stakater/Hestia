@@ -3,12 +3,12 @@ kind: DeploymentConfig
 metadata:
   name: {{ .name }}
   labels:
-    app: e2e-deployment-config
+    app: {{ .appLabel }}
     runner.stakater.com/enable: "true"
 spec:
   replicas: 1
   selector:
-    app: e2e-deployment-config
+    app: {{ .appLabel }}
   strategy:
     type: Rolling
     rollingParams:
@@ -20,7 +20,7 @@ spec:
   template:
     metadata:
       labels:
-        app: e2e-deployment-config
+        app: {{ .appLabel }}
     spec:
       initContainers:
         - name: readiness-delay-{{ .readinessDelay }}

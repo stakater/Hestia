@@ -3,15 +3,17 @@ kind: Runner
 metadata:
   name: {{ .name }}
   labels:
-    app: e2e-dcf-runner
+    app: {{ .appLabel }}
 spec:
+  schedule: "{{ .schedule }}"
+  deadlineSeconds: {{ .deadlineSeconds }}
   deploymentSelector:
     matchLabels:
       app: {{ .appLabel }}
   template:
     spec:
       containers:
-        - name: e2e-dcf-job
+        - name: e2e-cron-deploy
           image: busybox
           imagePullPolicy: IfNotPresent
           command: ["sh", "-c", "sleep {{ .jobDuration }} && echo done && exit 0"]

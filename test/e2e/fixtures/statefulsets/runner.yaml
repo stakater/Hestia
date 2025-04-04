@@ -3,11 +3,11 @@ kind: Runner
 metadata:
   name: {{ .name }}
   labels:
-    app: statefulset-runner
+    app: {{ .appLabel }}
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-statefulset
+      app: {{ .appLabel }}
   template:
     spec:
       containers:

@@ -1,24 +1,24 @@
 
-[controller operator should watch statefulsets - 1]
+[controller operator should schedule job by watching deployments - 1]
 metadata:
-  name: statefulsets-runner
+  name: deployment-runner
   namespace: hestia-statefulset-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: e2e-statefulset
+    app: runner-1
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-statefulset
+      app: e2e-deployment
   template:
     spec:
       containers:
-        - name: statefulset-job
+        - name: deployment-job
           image: busybox
           command:
             - sh
@@ -33,5 +33,11 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: ""
+  lastSuccessfulRunTime: <Any value>
 
 ---

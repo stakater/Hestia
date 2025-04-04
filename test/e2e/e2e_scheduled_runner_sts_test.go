@@ -11,18 +11,16 @@ import (
 	v1 "k8s.io/api/batch/v1"
 	v13 "k8s.io/api/core/v1"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/labels"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var _ = Describe("controller", Ordered, func() {
-	const runnerNs = "hestia-statefulset-instance"
-	const deployment1Ns = "hestia-deployment-1"
-	const deployment2Ns = "hestia-deployment-2"
+	const runnerNs = "hestia-cron-sts"
+	const dcf1Ns = "hestia-cron-sts-1"
+	const dcf2Ns = "hestia-cron-sts-2"
 
 	BeforeAll(func() {
 		By("creating namespaces")
-		for _, ns := range []string{runnerNs, deployment1Ns, deployment2Ns} {
+		for _, ns := range []string{runnerNs, dcf1Ns, dcf2Ns} {
 			_, err := utils.RunShell("oc", "new-project", ns, "||", "oc", "project", ns)
 			Expect(err).NotTo(HaveOccurred())
 		}
@@ -30,37 +28,39 @@ var _ = Describe("controller", Ordered, func() {
 
 	AfterAll(func() {
 		By("removing namespaces")
-		for _, ns := range []string{runnerNs, deployment1Ns, deployment2Ns} {
+		for _, ns := range []string{runnerNs, dcf1Ns, dcf2Ns} {
 			_, err := utils.Run("oc", "delete", "project", ns)
 			Expect(err).NotTo(HaveOccurred())
 		}
 	})
 
 	Context("operator", func() {
-		It("should schedule job by watching deployments", func() {
-			By("creating deployment 1")
+		It("should watch and schedule job for statefulsets", func() {
+			By("creating statefulset 1")
 			replacements := map[string]interface{}{
-				"name":           "deployment-1",
+				"name":           "cron-sts-1",
 				"readinessDelay": "1",
-				"appLabel":       "e2e-deployment",
+				"appLabel":       "cron-sts-job",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/busybox.yaml", deployment1Ns, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/statefulsets/busybox.yaml", dcf1Ns, replacements)
 
-			By("creating deployment 2")
+			By("creating statefulsets 2")
 			replacements = map[string]interface{}{
-				"name":           "deployment-2",
+				"name":           "cron-sts-2",
 				"readinessDelay": "2",
-				"appLabel":       "e2e-deployment",
+				"appLabel":       "cron-sts-job",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/busybox.yaml", deployment2Ns, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/statefulsets/busybox.yaml", dcf2Ns, replacements)
 
-			By("creating runner")
+			By("creating scheduled runner")
 			replacements = map[string]interface{}{
-				"name":        "deployment-runner",
-				"jobDuration": "1",
-				"appLabel":    "e2e-deployment",
+				"name":            "cron-sts-runner",
+				"jobDuration":     "1",
+				"schedule":        "* * * * *", // every minute
+				"deadlineSeconds": 120,
+				"appLabel":        "cron-sts-job",
 			}
-			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployments/runner.yaml", runnerNs, replacements)
+			utils.ApplyFixtureTemplate("./test/e2e/fixtures/statefulsets/scheduled_runner.yaml", runnerNs, replacements)
 
 			By("validate runner reconcile")
 			runner := &v1alpha1.Runner{
@@ -71,8 +71,8 @@ var _ = Describe("controller", Ordered, func() {
 			}
 			utils.WaitForResource(runner, func() bool {
 				return runner.Status.IsReady()
-			}, "60s", "1s")
-			utils.MatchYAMLResource(runner, "reconciled")
+			}, "1m", "1s")
+			utils.MatchYAMLResource(runner, "schedule", "reconciled")
 
 			By("validate job-config and track readiness")
 			jobConfig := &v13.ConfigMap{
@@ -93,39 +93,27 @@ var _ = Describe("controller", Ordered, func() {
 
 					return true
 				}
-			}, "60s", "1s")
+			}, "1m", "1s")
 			utils.MatchYAMLResource(jobConfig)
 
-			By("validate job execution")
-			jobs := &v1.JobList{}
-			utils.WaitForResources(jobs, &client.ListOptions{
-				LabelSelector: labels.SelectorFromSet(map[string]string{
-					constants.OwnerLabel:          jobConfig.Labels[constants.OwnerLabel],
-					constants.OwnerNamespaceLabel: jobConfig.Labels[constants.OwnerNamespaceLabel],
-					constants.VersionLabel:        jobConfig.ResourceVersion,
-				}),
-			}, func() bool {
-				if len(jobs.Items) == 0 {
-					return false
-				}
-
-				for _, job := range jobs.Items {
-					if job.Status.Active != 0 || job.Status.Failed != 0 {
-						return false
-					}
-				}
-
+			By("validate cron-job creation")
+			cron := &v1.CronJob{
+				ObjectMeta: v12.ObjectMeta{
+					Name:      fmt.Sprintf("%s", replacements["name"]),
+					Namespace: runnerNs,
+				},
+			}
+			utils.WaitForResource(cron, func() bool {
 				return true
-			}, "60s", "1s")
-			Expect(jobs.Items).To(HaveLen(1))
-			utils.MatchYAMLResource(&jobs.Items[0], "execution")
+			}, "2m", "1s")
+			utils.MatchYAMLResource(cron, "scheduled", "execution")
 
 			By("validate runner job status")
 			utils.WaitForResource(runner, func() bool {
 				condition, ok := apis.GetCondition(constants.JobStatusType, runner.Status.Conditions.Conditions)
 				return ok && condition.Status == v12.ConditionTrue
-			}, "60s", "1s")
-			utils.MatchYAMLResource(runner, "reported")
+			}, "2m", "5s")
+			utils.MatchYAMLResource(runner, "scheduled", "reported")
 		})
 	})
 })

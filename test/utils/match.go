@@ -18,7 +18,6 @@ var excludeFields = []string{
 	"$.metadata.annotations",
 	"$.metadata.managedFields",
 	"$.metadata.ownerReferences",
-	"$.metadata.name",
 	"$.spec.selector",
 	"$.spec.template.metadata",
 	"$.status.startTime",
@@ -27,6 +26,16 @@ var excludeFields = []string{
 	"$.status.conditions[*].lastProbeTime",
 	"$.status.lastSuccessfulRunTime",
 	"$.status.uncountedTerminatedPods",
+	"$.status.lastScheduleTime",
+	"$.status.lastSuccessfulTime",
+}
+
+var excludeJobFields = append(excludeFields, []string{
+	"$.metadata.name",
+}...)
+
+var excludeFieldMap = map[string][]string{
+	"job": excludeJobFields,
 }
 
 func replaceMapValue(val any) {
@@ -49,6 +58,11 @@ func MatchYAMLResource(resource runtime.Object, snapshotName ...string) {
 	}
 
 	name = fmt.Sprintf("[%s] %s", kind, name)
+	exclude, ok := excludeFieldMap[kind]
+	if !ok {
+		exclude = excludeFields
+	}
+
 	snaps.WithConfig(
 		snaps.Dir(fmt.Sprintf("__snapshots__/%s", currentSpec.FullText())),
 		snaps.Filename(name),
@@ -56,10 +70,14 @@ func MatchYAMLResource(resource runtime.Object, snapshotName ...string) {
 	).MatchYAML(
 		core.GinkgoT(),
 		resource,
-		match.Any(excludeFields...).ErrOnMissingPath(false),
+		match.Any(exclude...).ErrOnMissingPath(false),
 		match.Custom("$.metadata.labels", func(val any) (any, error) {
 			replaceMapValue(val)
 			return val, nil
 		}),
+		match.Custom("$.spec.jobTemplate.metadata.labels", func(val any) (any, error) {
+			replaceMapValue(val)
+			return val, nil
+		}).ErrOnMissingPath(false),
 	)
 }

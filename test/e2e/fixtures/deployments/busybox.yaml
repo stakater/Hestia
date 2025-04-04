@@ -3,17 +3,17 @@ kind: Deployment
 metadata:
   name: {{ .name }}
   labels:
-    app: e2e-deployment
+    app: {{ .appLabel }}
     runner.stakater.com/enable: "true"
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: e2e-deployment
+      app: {{ .appLabel }}
   template:
     metadata:
       labels:
-        app: e2e-deployment
+        app: {{ .appLabel }}
     spec:
       initContainers:
         - name: readiness-delay-{{ .readinessDelay }}

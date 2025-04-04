@@ -1,7 +1,7 @@
 
-[controller operator should watch deployments - 1]
+[controller operator should schedule job by watching deployments - 1]
 metadata:
-  name: <Any value>
+  name: deployment-runner
   namespace: hestia-statefulset-instance
   uid: <Any value>
   resourceVersion: <Any value>

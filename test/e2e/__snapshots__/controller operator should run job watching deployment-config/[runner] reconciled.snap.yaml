@@ -1,24 +1,24 @@
 
-[controller operator should watch deployment-config - 1]
+[controller operator should run job watching deployment-config - 1]
 metadata:
-  name: <Any value>
-  namespace: hestia-deployment-config-instance
+  name: hestia-dcf-runner
+  namespace: hestia-dcf-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: deployment-config-runner
+    app: e2e-dcf-runner
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-deployment-config
+      app: dcf-cronjob
   template:
     spec:
       containers:
-        - name: deployment-config-job
+        - name: e2e-dcf-job
           image: busybox
           command:
             - sh
@@ -33,11 +33,5 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
-    - type: JobCompleted
-      status: "True"
-      lastTransitionTime: <Any value>
-      reason: Successful
-      message: ""
-  lastSuccessfulRunTime: <Any value>
 
 ---

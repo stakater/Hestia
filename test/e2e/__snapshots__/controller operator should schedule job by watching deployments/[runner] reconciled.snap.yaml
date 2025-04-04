@@ -1,24 +1,24 @@
 
-[controller operator should watch deployment-config - 1]
+[controller operator should schedule job by watching deployments - 1]
 metadata:
-  name: <Any value>
-  namespace: hestia-deployment-config-instance
+  name: deployment-runner
+  namespace: hestia-statefulset-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: deployment-config-runner
+    app: runner-1
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: e2e-deployment-config
+      app: e2e-deployment
   template:
     spec:
       containers:
-        - name: deployment-config-job
+        - name: deployment-job
           image: busybox
           command:
             - sh

@@ -1,17 +1,17 @@
 
-[controller operator should watch deployment-config - 1]
+[controller operator should run job watching deployment-config - 1]
 metadata:
   name: <Any value>
-  generateName: deployment-config-runner-
-  namespace: hestia-deployment-config-instance
+  generateName: hestia-dcf-runner-
+  namespace: hestia-dcf-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
     runner.stakater.com/enable: "true"
-    runner.stakater.com/name: deployment-config-runner
-    runner.stakater.com/namespace: hestia-deployment-config-instance
+    runner.stakater.com/name: hestia-dcf-runner
+    runner.stakater.com/namespace: hestia-dcf-instance
     runner.stakater.com/version: <Any value>
   ownerReferences: <Any value>
   managedFields: <Any value>
@@ -25,7 +25,7 @@ spec:
     metadata: <Any value>
     spec:
       containers:
-        - name: deployment-config-job
+        - name: e2e-dcf-job
           image: busybox
           command:
             - sh

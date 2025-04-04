@@ -1,0 +1,23 @@
+
+[controller operator should run job watching deployment-config - 1]
+metadata:
+  name: hestia-dcf-runner
+  namespace: hestia-dcf-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: hestia-dcf-runner
+    runner.stakater.com/namespace: hestia-dcf-instance
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+data:
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-hestia-dcf-1: "true"
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-hestia-dcf-2: "true"
+  deadline: "0"
+  deploymentMinimum: "true"
+  generation: "1"
+  schedule: ""
+
+---

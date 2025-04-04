@@ -121,7 +121,8 @@ GINKGO := $(shell go env GOPATH)/bin/ginkgo
 # Utilize Kind or modify the e2e tests to load the image locally, enabling compatibility with other vendors.
 .PHONY: test-e2e  # Run the e2e tests against a Kind k8s instance that is spun up.
 test-e2e:
-	$(GINKGO) -v -p --trace --procs=4 ./test/e2e/
+	#$(GINKGO) -vv -p --trace --procs=1 ./test/e2e/
+	go test ./test/e2e/ -v -ginkgo.v
 
 .PHONY: lint
 lint: golangci-lint ## Run golangci-lint linter

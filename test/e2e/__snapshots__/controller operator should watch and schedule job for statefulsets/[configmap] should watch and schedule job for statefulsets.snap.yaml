@@ -1,0 +1,23 @@
+
+[controller operator should watch and schedule job for statefulsets - 1]
+metadata:
+  name: cron-sts-runner
+  namespace: hestia-cron-sts
+  uid: <Any value>
+  resourceVersion: <Any value>
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: cron-sts-runner
+    runner.stakater.com/namespace: hestia-cron-sts
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+data:
+  apps_v1-statefulset-hestia-cron-sts-1-cron-sts-1: "true"
+  apps_v1-statefulset-hestia-cron-sts-2-cron-sts-2: "true"
+  deadline: "120"
+  deploymentMinimum: "true"
+  generation: "1"
+  schedule: "* * * * *"
+
+---
