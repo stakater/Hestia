@@ -33,5 +33,10 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+    - type: JobCompleted
+      status: "False"
+      lastTransitionTime: <Any value>
+      reason: Pending
+      message: ""
 
 ---

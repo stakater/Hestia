@@ -8,6 +8,7 @@ import (
 	"github.com/onsi/ginkgo/v2/dsl/core"
 	"github.com/stakater/hestia-operator/internal/constants"
 	"k8s.io/apimachinery/pkg/runtime"
+	"path/filepath"
 	"strings"
 )
 
@@ -64,7 +65,7 @@ func MatchYAMLResource(resource runtime.Object, snapshotName ...string) {
 	}
 
 	snaps.WithConfig(
-		snaps.Dir(fmt.Sprintf("__snapshots__/%s", currentSpec.FullText())),
+		snaps.Dir(fmt.Sprintf("__snapshots__/%s/%s", filepath.Base(currentSpec.FileName()), currentSpec.LeafNodeText)),
 		snaps.Filename(name),
 		snaps.Ext(".yaml"),
 	).MatchYAML(

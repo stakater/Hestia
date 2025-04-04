@@ -94,7 +94,7 @@ var _ = Describe("controller", Ordered, func() {
 					return true
 				}
 			}, "2m", "1s")
-			utils.MatchYAMLResource(jobConfig)
+			utils.MatchYAMLResource(jobConfig, "job", "config")
 
 			By("validate job execution")
 			jobs := &v1.JobList{}

@@ -94,7 +94,7 @@ var _ = Describe("controller", Ordered, func() {
 					return true
 				}
 			}, "1m", "1s")
-			utils.MatchYAMLResource(jobConfig)
+			utils.MatchYAMLResource(jobConfig, "job", "config")
 
 			By("validate cron-job creation")
 			cron := &v1.CronJob{
