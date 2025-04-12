@@ -47,7 +47,7 @@ var _ = Describe("controller", Ordered, func() {
 			By("creating deployment-config 2")
 			replacements = map[string]interface{}{
 				"name":           "dcf-scheduled-2",
-				"readinessDelay": "2",
+				"readinessDelay": "10",
 				"appLabel":       "dcf-job",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf2Ns, replacements)

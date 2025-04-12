@@ -90,10 +90,19 @@ func IsStatefulSetReady(sts *v1.StatefulSet) bool {
 }
 
 func IsDeploymentConfigReady(dc *ocp.DeploymentConfig) bool {
-	return dc != nil &&
-		dc.Status.ObservedGeneration >= dc.Generation &&
-		dc.Status.UpdatedReplicas == dc.Status.Replicas &&
-		dc.Status.AvailableReplicas == dc.Status.Replicas
+	isAvailable := false
+	for _, condition := range dc.Status.Conditions {
+		if condition.Type == ocp.DeploymentAvailable &&
+			condition.Status == v13.ConditionTrue {
+			isAvailable = true
+			break
+		}
+	}
+
+	replicasReady := dc.Spec.Replicas == dc.Status.ReadyReplicas &&
+		dc.Status.ReadyReplicas == dc.Status.AvailableReplicas
+
+	return isAvailable && replicasReady
 }
 
 func IsJobReady(job *v12.Job) bool {

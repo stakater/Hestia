@@ -33,10 +33,14 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
-    - type: JobCompleted
-      status: "False"
-      lastTransitionTime: <Any value>
-      reason: Pending
-      message: ""
+  watchedResources:
+    - name: deployment-1
+      namespace: hestia-deployment-1
+      kind: Deployment
+      ready: false
+    - name: deployment-2
+      namespace: hestia-deployment-2
+      kind: Deployment
+      ready: false
 
 ---

@@ -35,5 +35,14 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+  watchedResources:
+    - name: dcf-scheduled-1
+      namespace: hestia-dcf-1
+      kind: DeploymentConfig
+      ready: false
+    - name: dcf-scheduled-2
+      namespace: hestia-dcf-2
+      kind: DeploymentConfig
+      ready: false
 
 ---

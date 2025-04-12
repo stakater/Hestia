@@ -1,33 +1,32 @@
 
-[controller operator should watch and schedule job for statefulsets - 1]
+[controller operator should schedule job sequence by watching apps - 1]
 metadata:
-  name: cron-sts-runner
-  namespace: hestia-cron-sts
+  name: runner-1
+  namespace: hestia-runner1-instance
   uid: <Any value>
   resourceVersion: <Any value>
   generation: 1
   creationTimestamp: <Any value>
   labels:
-    app: cron-sts-job
+    app: runner-1
+    sequence: runner-sequence
   annotations: <Any value>
   managedFields: <Any value>
 spec:
   deploymentSelector:
     matchLabels:
-      app: cron-sts-job
+      app: runner-1-app
   template:
     spec:
       containers:
-        - name: statefulset-cronjob
+        - name: runner1-job
           image: busybox
           command:
             - sh
             - -c
-            - sleep 1 && echo done && exit 0
+            - sleep 10 && echo done && exit 0
           imagePullPolicy: IfNotPresent
       restartPolicy: Never
-  schedule: "* * * * *"
-  deadlineSeconds: 120
 status:
   conditions:
     - type: ReconcileSuccess
@@ -35,14 +34,16 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: ""
+  lastSuccessfulRunTime: <Any value>
   watchedResources:
-    - name: cron-sts-1
-      namespace: hestia-cron-sts-1
-      kind: StatefulSet
-      ready: false
-    - name: cron-sts-2
-      namespace: hestia-cron-sts-2
-      kind: StatefulSet
-      ready: false
+    - name: app-1
+      namespace: hestia-app-1
+      kind: Deployment
+      ready: true
 
 ---

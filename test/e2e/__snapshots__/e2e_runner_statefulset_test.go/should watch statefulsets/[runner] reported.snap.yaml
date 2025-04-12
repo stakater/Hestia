@@ -39,5 +39,14 @@ status:
       reason: Successful
       message: ""
   lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: statefulset-1
+      namespace: hestia-statefulset-1
+      kind: StatefulSet
+      ready: true
+    - name: statefulset-2
+      namespace: hestia-statefulset-2
+      kind: StatefulSet
+      ready: true
 
 ---

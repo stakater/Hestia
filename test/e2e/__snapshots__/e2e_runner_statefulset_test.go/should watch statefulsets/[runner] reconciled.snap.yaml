@@ -33,5 +33,14 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+  watchedResources:
+    - name: statefulset-1
+      namespace: hestia-statefulset-1
+      kind: StatefulSet
+      ready: false
+    - name: statefulset-2
+      namespace: hestia-statefulset-2
+      kind: StatefulSet
+      ready: false
 
 ---

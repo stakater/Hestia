@@ -108,7 +108,6 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	}
 
 	matchedResources := append(matchedRunners, matchedDeployments...)
-	matchedResources = append(matchedRunners, matchedRunners...)
 	return r.HandleSuccess(ctx, runner, resources.CreateReadinessStatus(matchedResources...))
 }
 

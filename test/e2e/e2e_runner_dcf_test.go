@@ -41,7 +41,7 @@ var _ = Describe("controller", Ordered, func() {
 			By("creating deployment-config 1")
 			replacements := map[string]interface{}{
 				"name":           "hestia-dcf-1",
-				"readinessDelay": "1",
+				"readinessDelay": "5",
 				"appLabel":       "dcf-cronjob",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf1Ns, replacements)
@@ -49,7 +49,7 @@ var _ = Describe("controller", Ordered, func() {
 			By("creating deployment-config 2")
 			replacements = map[string]interface{}{
 				"name":           "hestia-dcf-2",
-				"readinessDelay": "2",
+				"readinessDelay": "5",
 				"appLabel":       "dcf-cronjob",
 			}
 			utils.ApplyFixtureTemplate("./test/e2e/fixtures/deployment_configs/busybox.yaml", dcf2Ns, replacements)
@@ -71,7 +71,7 @@ var _ = Describe("controller", Ordered, func() {
 			}
 			utils.WaitForResource(runner, func() bool {
 				return runner.Status.IsReady()
-			}, "60s", "1s")
+			}, "20s", "1s")
 			utils.MatchYAMLResource(runner, "reconciled")
 
 			By("validate job-config and track readiness")
@@ -93,7 +93,7 @@ var _ = Describe("controller", Ordered, func() {
 
 					return true
 				}
-			}, "2m", "1s")
+			}, "20s", "1s")
 			utils.MatchYAMLResource(jobConfig, "job", "config")
 
 			By("validate job execution")
@@ -116,7 +116,7 @@ var _ = Describe("controller", Ordered, func() {
 				}
 
 				return true
-			}, "60s", "1s")
+			}, "20s", "1s")
 			Expect(jobs.Items).To(HaveLen(1))
 			utils.MatchYAMLResource(&jobs.Items[0], "execution")
 
@@ -124,7 +124,7 @@ var _ = Describe("controller", Ordered, func() {
 			utils.WaitForResource(runner, func() bool {
 				condition, ok := apis.GetCondition(constants.JobStatusType, runner.Status.Conditions.Conditions)
 				return ok && condition.Status == v12.ConditionTrue
-			}, "60s", "1s")
+			}, "20s", "1s")
 			utils.MatchYAMLResource(runner, "reported")
 		})
 	})

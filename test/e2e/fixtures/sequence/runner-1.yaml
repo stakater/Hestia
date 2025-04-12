@@ -1,0 +1,19 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .runnerLabel }}
+    sequence: {{ .sequenceLabel }}
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: {{ .appLabel }}
+  template:
+    spec:
+      containers:
+        - name: runner1-job
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "sleep {{ .jobDuration }} && echo done && exit 0"]
+      restartPolicy: Never

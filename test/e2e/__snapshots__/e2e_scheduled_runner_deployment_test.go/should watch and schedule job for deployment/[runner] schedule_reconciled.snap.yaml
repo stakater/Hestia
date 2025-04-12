@@ -35,5 +35,14 @@ status:
       lastTransitionTime: <Any value>
       reason: LastReconcileCycleSucceded
       message: ""
+  watchedResources:
+    - name: cron-deploy-1
+      namespace: hestia-cron-deploy-1
+      kind: Deployment
+      ready: false
+    - name: cron-deploy-2
+      namespace: hestia-cron-deploy-2
+      kind: Deployment
+      ready: false
 
 ---
