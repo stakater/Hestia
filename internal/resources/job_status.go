@@ -2,6 +2,9 @@ package resources
 
 import (
 	"context"
+	"sort"
+	"strconv"
+
 	"github.com/redhat-cop/operator-utils/pkg/util/apis"
 	"github.com/stakater/hestia-operator/internal/constants"
 	v1 "k8s.io/api/batch/v1"
@@ -9,8 +12,6 @@ import (
 	v13 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sort"
-	"strconv"
 )
 
 type JobStatus struct {

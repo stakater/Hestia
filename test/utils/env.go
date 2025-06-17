@@ -2,14 +2,16 @@ package utils
 
 import (
 	"fmt"
+	"strings"
+	"time"
+
 	"github.com/onsi/ginkgo/v2"
-	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/envtest"
-	"strings"
-	"time"
+
+	"github.com/stakater/hestia-operator/api/v1alpha1"
 )
 
 type E2ETestEnv struct {
@@ -181,7 +183,7 @@ func (env *E2ETestEnv) Setup() error {
 			"pods", controllerPodName, "-o", "jsonpath={.status.phase}",
 			"-n", env.operatorNamespace,
 		)
-		if err != nil || string(status) != "Running" {
+		if err != nil || status != "Running" {
 			return fmt.Errorf("controller pod in %s status", status)
 		}
 		return nil

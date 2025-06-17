@@ -18,14 +18,15 @@ package e2e
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/gkampitakis/go-snaps/snaps"
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"github.com/stakater/hestia-operator/test/utils"
-	"os"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
-	"testing"
 )
 
 func TestMain(m *testing.M) {

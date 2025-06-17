@@ -7,7 +7,7 @@ import (
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/constants"
 	"github.com/stakater/hestia-operator/test/utils"
-	"k8s.io/apimachinery/pkg/apis/meta/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
 var _ = Describe("controller", Ordered, func() {

@@ -19,10 +19,11 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"os"
+
 	ocp "github.com/openshift/api/apps/v1"
 	"github.com/stakater/hestia-operator/internal/constants"
 	v13 "k8s.io/api/core/v1"
-	"os"
 
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/batch/v1"

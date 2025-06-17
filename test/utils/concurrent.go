@@ -1,8 +1,9 @@
 package utils
 
 import (
-	"github.com/onsi/gomega"
 	"sync"
+
+	"github.com/onsi/gomega"
 )
 
 type Concurrently struct {

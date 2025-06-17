@@ -2,10 +2,11 @@ package scheduler
 
 import (
 	"context"
+	"sync"
+
 	"github.com/robfig/cron/v3"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/event"
-	"sync"
 )
 
 type CronEntry struct {

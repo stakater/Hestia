@@ -3,9 +3,10 @@ package utils
 import (
 	"context"
 	"fmt"
+	"strings"
+
 	"github.com/onsi/gomega"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strings"
 )
 
 func WaitForResource(obj client.Object, validateFnc func() bool, timeArgs ...interface{}) {

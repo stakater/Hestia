@@ -3,6 +3,8 @@ package controller
 import (
 	"context"
 	"fmt"
+	"strconv"
+
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/constants"
 	"github.com/stakater/hestia-operator/internal/resources"
@@ -16,7 +18,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
-	"strconv"
 )
 
 // JobRunnerReconciler reconciles ConfigMaps and manages Jobs

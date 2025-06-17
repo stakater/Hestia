@@ -2,14 +2,16 @@ package utils
 
 import (
 	"fmt"
+	"path/filepath"
+	"strings"
+
 	"github.com/gkampitakis/go-snaps/match"
 	"github.com/gkampitakis/go-snaps/snaps"
 	"github.com/onsi/ginkgo/v2"
 	"github.com/onsi/ginkgo/v2/dsl/core"
-	"github.com/stakater/hestia-operator/internal/constants"
 	"k8s.io/apimachinery/pkg/runtime"
-	"path/filepath"
-	"strings"
+
+	"github.com/stakater/hestia-operator/internal/constants"
 )
 
 var excludeFields = []string{

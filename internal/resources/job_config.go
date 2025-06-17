@@ -2,6 +2,8 @@ package resources
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/constants"
 	v1 "k8s.io/api/core/v1"
@@ -10,7 +12,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"strconv"
 )
 
 type JobConfig struct {

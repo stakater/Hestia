@@ -18,13 +18,13 @@ package utils
 
 import (
 	"fmt"
-	"github.com/onsi/gomega"
 	"os"
 	"os/exec"
 	"reflect"
 	"strings"
 
 	. "github.com/onsi/ginkgo/v2" //nolint:golint,revive
+	"github.com/onsi/gomega"
 )
 
 func warnError(err error) {

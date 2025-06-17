@@ -2,6 +2,8 @@ package resources
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	v1 "k8s.io/api/batch/v1"
 	v12 "k8s.io/api/core/v1"
@@ -9,7 +11,6 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
-	"strconv"
 )
 
 type ScheduledJob struct {

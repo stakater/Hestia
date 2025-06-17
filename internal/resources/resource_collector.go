@@ -3,16 +3,17 @@ package resources
 import (
 	"context"
 	"fmt"
+	"regexp"
+	"strconv"
+	"strings"
+
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/status"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"regexp"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"strconv"
-	"strings"
 )
 
 type ResourceCollector struct {
