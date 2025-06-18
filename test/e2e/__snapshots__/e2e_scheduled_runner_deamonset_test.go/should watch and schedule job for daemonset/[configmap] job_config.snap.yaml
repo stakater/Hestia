@@ -1,0 +1,23 @@
+
+[controller operator should watch and schedule job for daemonset - 1]
+metadata:
+  name: cron-daemonset-runner
+  namespace: hestia-cron-daemonset
+  uid: <Any value>
+  resourceVersion: <Any value>
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: cron-daemonset-runner
+    runner.stakater.com/namespace: hestia-cron-daemonset
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+data:
+  apps_v1-daemonset-hestia-cron-daemonset-1-cron-daemonset-1: "true"
+  apps_v1-daemonset-hestia-cron-daemonset-2-cron-daemonset-2: "true"
+  deadline: "120"
+  deploymentMinimum: "true"
+  generation: "1"
+  schedule: "* * * * *"
+
+---

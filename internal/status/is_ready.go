@@ -3,13 +3,14 @@ package status
 import (
 	ocp "github.com/openshift/api/apps/v1"
 	"github.com/redhat-cop/operator-utils/pkg/util/apis"
-	"github.com/stakater/hestia-operator/api/v1alpha1"
-	"github.com/stakater/hestia-operator/internal/constants"
 	v1 "k8s.io/api/apps/v1"
 	v12 "k8s.io/api/batch/v1"
 	v13 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
+
+	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/constants"
 )
 
 var (
@@ -58,6 +59,14 @@ var (
 			}
 
 			return IsDeploymentConfigReady(dc)
+		},
+		"DaemonSet": func(obj unstructured.Unstructured) bool {
+			daemonset := &v1.DaemonSet{}
+			err := runtime.DefaultUnstructuredConverter.FromUnstructured(obj.Object, daemonset)
+			if err != nil {
+				return false
+			}
+			return IsDaemonSetReady(daemonset)
 		},
 	}
 )
@@ -118,6 +127,14 @@ func IsJobReady(job *v12.Job) bool {
 	}
 
 	return false
+}
+
+func IsDaemonSetReady(ds *v1.DaemonSet) bool {
+	return ds != nil &&
+		ds.Status.ObservedGeneration >= ds.Generation &&
+		ds.Status.DesiredNumberScheduled == ds.Status.NumberReady &&
+		ds.Status.DesiredNumberScheduled == ds.Status.NumberAvailable &&
+		ds.Status.DesiredNumberScheduled == ds.Status.UpdatedNumberScheduled
 }
 
 func GetKey(obj unstructured.Unstructured) string {

@@ -1,0 +1,54 @@
+
+[controller operator should watch and schedule job for daemonset - 1]
+metadata:
+  name: cron-daemonset-runner
+  namespace: hestia-cron-daemonset
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: cron-daemonset-job
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: cron-daemonset-job
+  template:
+    spec:
+      containers:
+        - name: e2e-cron-daemonset
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+  schedule: "* * * * *"
+  deadlineSeconds: 120
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: cron-daemonset-1
+      namespace: hestia-cron-daemonset-1
+      kind: DaemonSet
+      ready: true
+    - name: cron-daemonset-2
+      namespace: hestia-cron-daemonset-2
+      kind: DaemonSet
+      ready: true
+
+---

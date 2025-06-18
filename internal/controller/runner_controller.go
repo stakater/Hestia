@@ -23,9 +23,6 @@ import (
 
 	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/apps/v1"
-	"github.com/stakater/hestia-operator/api/v1alpha1"
-	"github.com/stakater/hestia-operator/internal/resources"
-	"github.com/stakater/hestia-operator/internal/status"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -41,6 +38,10 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/predicate"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
+
+	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/resources"
+	"github.com/stakater/hestia-operator/internal/status"
 )
 
 // RunnerReconciler reconciles a Runner object
@@ -56,6 +57,7 @@ type RunnerReconciler struct {
 //+kubebuilder:rbac:groups=batch,resources=jobs,verbs=get;list;watch;create;update;patch;delete
 //+kubebuilder:rbac:groups=apps,resources=statefulsets,verbs=get;list;watch
 //+kubebuilder:rbac:groups=apps.openshift.io,resources=deploymentconfigs,verbs=get;list;watch
+//+kubebuilder:rbac:groups=apps,resources=daemonsets,verbs=get;list;watch
 
 func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = log.Log.WithName(fmt.Sprintf("[Runner] %s", req.NamespacedName))
@@ -83,6 +85,7 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 	deploymentResource := resources.NewResourceCollector([]schema.GroupVersionKind{
 		{Group: "apps", Version: "v1", Kind: "Deployment"},
 		{Group: "apps", Version: "v1", Kind: "StatefulSet"},
+		{Group: "apps", Version: "v1", Kind: "DaemonSet"},
 		{Group: "batch", Version: "v1", Kind: "Job"},
 		{Group: "apps.openshift.io", Version: "v1", Kind: "DeploymentConfig"},
 	})
@@ -137,6 +140,11 @@ var readyPredicateFn = predicate.Funcs{
 			sc := e.ObjectNew.(*v1.StatefulSet)
 
 			return !status.IsStatefulSetReady(sd) && status.IsStatefulSetReady(sc)
+		case "DaemonSet":
+			od := e.ObjectOld.(*v1.DaemonSet)
+			cd := e.ObjectNew.(*v1.DaemonSet)
+
+			return !status.IsDaemonSetReady(od) && status.IsDaemonSetReady(cd)
 		case "DeploymentConfig":
 			dcd := e.ObjectOld.(*v13.DeploymentConfig)
 			dcc := e.ObjectNew.(*v13.DeploymentConfig)
@@ -154,6 +162,7 @@ func (r *RunnerReconciler) SetupWithManager(mgr ctrl.Manager) error {
 		For(&v1alpha1.Runner{}).
 		Watches(&v1.Deployment{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Watches(&v1.StatefulSet{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
+		Watches(&v1.DaemonSet{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Watches(&v13.DeploymentConfig{}, handler.EnqueueRequestsFromMapFunc(r.labelMatchingHandler), builder.WithPredicates(readyPredicateFn)).
 		Watches(&v1alpha1.Runner{}, handler.EnqueueRequestsFromMapFunc(r.runnerReadyHandler)).
 		Complete(r)

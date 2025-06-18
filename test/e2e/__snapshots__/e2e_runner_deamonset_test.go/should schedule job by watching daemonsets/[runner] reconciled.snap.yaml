@@ -1,0 +1,46 @@
+
+[controller operator should schedule job by watching daemonsets - 1]
+metadata:
+  name: daemonset-runner
+  namespace: hestia-daemonset-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: e2e-daemonset
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: e2e-daemonset
+  template:
+    spec:
+      containers:
+        - name: daemonset-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+  watchedResources:
+    - name: daemonset-1
+      namespace: hestia-daemonset-1
+      kind: DaemonSet
+      ready: false
+    - name: daemonset-2
+      namespace: hestia-daemonset-2
+      kind: DaemonSet
+      ready: false
+
+---
