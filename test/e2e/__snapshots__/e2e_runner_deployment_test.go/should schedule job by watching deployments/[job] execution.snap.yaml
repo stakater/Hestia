@@ -45,13 +45,13 @@ spec:
   podReplacementPolicy: TerminatingOrFailed
 status:
   conditions:
-    - type: Complete
+    - type: SuccessCriteriaMet
       status: "True"
       lastProbeTime: <Any value>
       lastTransitionTime: <Any value>
+      reason: CompletionsReached
+      message: Reached expected number of succeeded pods
   startTime: <Any value>
-  completionTime: <Any value>
-  succeeded: 1
   terminating: 0
   uncountedTerminatedPods: <Any value>
   ready: 0

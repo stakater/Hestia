@@ -37,7 +37,7 @@ status:
       status: "True"
       lastTransitionTime: <Any value>
       reason: Successful
-      message: ""
+      message: Reached expected number of succeeded pods
   lastSuccessfulRunTime: <Any value>
   watchedResources:
     - name: statefulset-1

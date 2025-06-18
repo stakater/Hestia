@@ -3,6 +3,6 @@ resources:
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 images:
-- digest: sha256:b6630dd75d7b3aa785ed42e9467fc121346803a058d84a2a5703f7f07911bcec
+- digest: sha256:1a04e5ad1187ec585b375274a54b0c052832c08ed7a69db421a61763b162937c
   name: controller
   newName: image-registry.openshift-image-registry.svc:5000/hestia-operator-system/hestia

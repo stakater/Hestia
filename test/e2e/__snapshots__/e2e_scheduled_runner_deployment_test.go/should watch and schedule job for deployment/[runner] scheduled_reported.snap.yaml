@@ -39,7 +39,7 @@ status:
       status: "True"
       lastTransitionTime: <Any value>
       reason: Successful
-      message: ""
+      message: Reached expected number of succeeded pods
   lastSuccessfulRunTime: <Any value>
   watchedResources:
     - name: cron-deploy-1
