@@ -1,6 +1,50 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
-  ]
+    "config:recommended",
+    "group:allNonMajor",
+    "schedule:weekly"
+  ],
+  "dependencyDashboard": true,
+  "commitMessage": {
+    "type": "chore",
+    "scope": "deps",
+    "separator": ":",
+    "subject": "update {{depName}} to {{newVersion}}"
+  },
+  "packageRules": [
+    {
+      "managers": ["gomod"],
+      "groupName": "go dependencies (minor and patch)",
+      "groupSlug": "go-minor-patch",
+      "matchUpdateTypes": ["minor", "patch"],
+      "automerge": false
+    },
+    {
+      "managers": ["gomod"],
+      "groupName": "go dependencies (major)",
+      "groupSlug": "go-major",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "managers": ["dockerfile"],
+      "groupName": "docker base images",
+      "automerge": false
+    },
+    {
+      "managers": ["github-actions"],
+      "groupName": "github actions",
+      "automerge": false
+    },
+    {
+      "matchUpdateTypes": ["security"],
+      "groupName": "security updates",
+      "automerge": false
+    }
+  ],
+  "onboarding": true,
+  "prConcurrentLimit": 5,
+  "labels": ["dependencies", "renovate"],
+  "ignorePaths": ["**/go.sum"]
 }
