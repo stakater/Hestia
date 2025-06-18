@@ -1,8 +1,18 @@
-# hestia-operator
-// TODO(user): Add simple overview of use/purpose
+# Hestia Operator
 
-## Description
-// TODO(user): An in-depth paragraph about your project and overview of use
+Hestia Operator automates the management and execution of jobs in your Kubernetes cluster, supporting a variety of workload types (Deployments, StatefulSets, DeploymentConfigs, and more). It enables you to define, schedule, and monitor custom job runners using Kubernetes-native resources.
+
+---
+
+## Features
+
+- **Custom Job Runners:** Define and manage custom job execution logic via CRDs.
+- **Scheduling:** Supports both immediate and scheduled (cron) job execution.
+- **Resource Watching:** Automatically reacts to changes in Deployments, StatefulSets, and DeploymentConfigs.
+- **Status Reporting:** Tracks and reports job execution status and results.
+- **Extensible:** Easily integrate with your CI/CD or automation workflows.
+
+---
 
 ## Getting Started
 
@@ -12,89 +22,250 @@
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
 
-### To Deploy on the cluster
-**Build and push your image to the location specified by `IMG`:**
+### Deploy the Operator
 
-```sh
-make docker-build docker-push IMG=<some-registry>/hestia-operator:tag
+1. **Build and push the operator image:**
+   ```sh
+   make docker-build docker-push IMG=<your-registry>/hestia-operator:tag
+   ```
+
+2. **Install CRDs:**
+   ```sh
+   make install
+   ```
+
+3. **Deploy the operator:**
+   ```sh
+   make deploy IMG=<your-registry>/hestia-operator:tag
+   ```
+
+4. **Apply sample Runner CRs:**
+   ```sh
+   kubectl apply -k config/samples/
+   ```
+
+---
+
+## Usage Examples
+
+### 1. Unified Runner CR for Deployments, StatefulSets, or DeploymentConfigs
+
+```yaml
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: my-generic-runner
+  labels:
+    app: my-app
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: my-app
+  template:
+    spec:
+      containers:
+        - name: my-job
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "sleep 1 && echo done && exit 0"]
+      restartPolicy: Never
 ```
 
-**NOTE:** This image ought to be published in the personal registry you specified.
-And it is required to have access to pull the image from the working environment.
-Make sure you have the proper permission to the registry if the above commands don’t work.
+**How to use:**
+- Set `deploymentSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, or DeploymentConfig.
+- The operator will watch for changes in any of these resource types that match the selector and trigger the job accordingly.
 
-**Install the CRDs into the cluster:**
+---
 
-```sh
-make install
+### 2. Scheduled Runner (CronJob) for Any Resource
+
+```yaml
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: my-scheduled-runner
+  labels:
+    app: my-app
+spec:
+  schedule: "* * * * *" # every minute
+  deadlineSeconds: 120
+  deploymentSelector:
+    matchLabels:
+      app: my-app
+  template:
+    spec:
+      containers:
+        - name: my-cronjob
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "sleep 1 && echo done && exit 0"]
+      restartPolicy: Never
 ```
 
-**Deploy the Manager to the cluster with the image specified by `IMG`:**
+**How to use:**
+- Works for Deployments, StatefulSets, or DeploymentConfigs—just match the label.
+- The job will be scheduled according to the cron expression in `schedule`.
 
-```sh
-make deploy IMG=<some-registry>/hestia-operator:tag
+---
+
+### 3. Job Sequence (Chaining Runners)
+
+**Runner 1:**
+
+```yaml
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: runner-1
+  labels:
+    app: runner-1
+    sequence: runner-sequence
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: runner-1-app
+  template:
+    spec:
+      containers:
+        - name: runner1-job
+          image: busybox
+          command: ["sh", "-c", "sleep 10 && echo done && exit 0"]
+      restartPolicy: Never
 ```
 
-> **NOTE**: If you encounter RBAC errors, you may need to grant yourself cluster-admin
-privileges or be logged in as admin.
+**Runner 2 (waits for Runner 1 to finish):**
 
-**Create instances of your solution**
-You can apply the samples (examples) from the config/sample:
-
-```sh
-kubectl apply -k config/samples/
+```yaml
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: runner-2
+  labels:
+    sequence: runner-sequence
+spec:
+  runnerSelector:
+    matchLabels:
+      app: runner-1
+  template:
+    spec:
+      containers:
+        - name: runner2-job
+          image: busybox
+          command: ["sh", "-c", "sleep 10 && echo done && exit 0"]
+      restartPolicy: Never
 ```
 
->**NOTE**: Ensure that the samples has default values to test it out.
+---
 
-### To Uninstall
-**Delete the instances (CRs) from the cluster:**
+**Tip:**
+- Use the same pattern for any resource type by adjusting the `matchLabels`.
+- For OpenShift, `deploymentSelector` will also match DeploymentConfigs.
+- For more advanced scenarios, see the `config/samples/` directory and test fixtures.
 
-```sh
-kubectl delete -k config/samples/
+---
+
+## Monitoring and Status
+
+- The operator updates the status of each Runner CR with job execution results.
+- You can check the status using:
+  ```sh
+  kubectl get runners.e2e.stakater.com -o yaml
+  ```
+
+---
+
+## Understanding Runner Status
+
+Each `Runner` resource provides detailed status information to help you track job execution and resource readiness. The key fields in `.status` are:
+
+- **conditions**:  
+  An array of condition objects describing the current state of the Runner.  
+  Common condition types include:
+  - `ReconcileSuccess`: Indicates the controller has successfully reconciled the Runner resource.
+  - `JobCompleted`: Indicates whether the most recent job run was completed.
+    - `status: "True"`: The job completed successfully.
+    - `status: "False"`: The job failed or is still running.
+    - `reason`: Provides a short reason such as `Successful`, `Failed`, `Pending`, or `JobNotFound`.
+    - `message`: Human-readable details about the job status.
+
+- **lastSuccessfulRunTime**:  
+  Timestamp of the last successful job execution.
+
+- **lastFailedRunTime**:  
+  Timestamp of the last failed job execution.
+
+- **watchedResources**:  
+  Lists the resources (Deployments, StatefulSets, DeploymentConfigs, etc.) being watched by this Runner, including their name, namespace, kind, and readiness status.
+
+### Example: Runner Status Output
+
+```yaml
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: "2024-05-01T12:00:00Z"
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: "2024-05-01T12:01:00Z"
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: "2024-05-01T12:01:00Z"
+  watchedResources:
+    - name: deployment-1
+      namespace: hestia-deployment-1
+      kind: Deployment
+      ready: true
+    - name: deployment-2
+      namespace: hestia-deployment-2
+      kind: Deployment
+      ready: true
 ```
 
-**Delete the APIs(CRDs) from the cluster:**
+**How to interpret:**
+- The `JobCompleted` condition with `status: "True"` and `reason: Successful` means the last job run finished successfully.
+- The `watchedResources` array shows which resources are being monitored and their readiness.
+- `lastSuccessfulRunTime` gives you the timestamp of the last successful job.
 
-```sh
-make uninstall
-```
+**Tip:**  
+- If a job fails, check the `reason` and `message` fields in the conditions for troubleshooting hints.
+- The `watchedResources` field helps you verify which resources are being monitored and their readiness.
 
-**UnDeploy the controller from the cluster:**
+---
 
-```sh
-make undeploy
-```
+## Uninstall
 
-## Project Distribution
+1. **Delete Runner CRs:**
+   ```sh
+   kubectl delete -k config/samples/
+   ```
 
-Following are the steps to build the installer and distribute this project to users.
+2. **Uninstall CRDs:**
+   ```sh
+   make uninstall
+   ```
 
-1. Build the installer for the image built and published in the registry:
+3. **Remove the operator:**
+   ```sh
+   make undeploy
+   ```
 
-```sh
-make build-installer IMG=<some-registry>/hestia-operator:tag
-```
+---
 
-NOTE: The makefile target mentioned above generates an 'install.yaml'
-file in the dist directory. This file contains all the resources built
-with Kustomize, which are necessary to install this project without
-its dependencies.
+## Troubleshooting
 
-2. Using the installer
+- **RBAC Issues:** Ensure your user has cluster-admin privileges if you encounter permission errors.
+- **Job Failures:** Check the Runner CR status and related Job/Pod logs for details.
 
-Users can just run kubectl apply -f <URL for YAML BUNDLE> to install the project, i.e.:
-
-```sh
-kubectl apply -f https://raw.githubusercontent.com/<org>/hestia-operator/<tag or branch>/dist/install.yaml
-```
+---
 
 ## Contributing
-// TODO(user): Add detailed information on how you would like others to contribute to this project
 
-**NOTE:** Run `make help` for more information on all potential `make` targets
+Contributions are welcome! Please see the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html) for more on extending operators.
 
-More information can be found via the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html)
+---
 
 ## License
 
