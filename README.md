@@ -8,7 +8,7 @@ Hestia Operator automates the management and execution of jobs in your Kubernete
 
 - **Custom Job Runners:** Define and manage custom job execution logic via CRDs.
 - **Scheduling:** Supports both immediate and scheduled (cron) job execution.
-- **Resource Watching:** Automatically reacts to changes in Deployments, StatefulSets, and DeploymentConfigs.
+- **Resource Watching:** Automatically reacts to changes in Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
 - **Status Reporting:** Tracks and reports job execution status and results.
 - **Extensible:** Easily integrate with your CI/CD or automation workflows.
 
@@ -48,7 +48,7 @@ Hestia Operator automates the management and execution of jobs in your Kubernete
 
 ## Usage Examples
 
-### 1. Unified Runner CR for Deployments, StatefulSets, or DeploymentConfigs
+### 1. Unified Runner CR for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs
 
 ```yaml
 apiVersion: e2e.stakater.com/v1alpha1
@@ -72,10 +72,9 @@ spec:
 ```
 
 **How to use:**
-- Set `deploymentSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, or DeploymentConfig.
-- The operator will watch for changes in any of these resource types that match the selector and trigger the job accordingly.
-
----
+- Set `deploymentSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, DaemonSet, or DeploymentConfig.
+- **Note:** In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
+- The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly.
 
 ### 2. Scheduled Runner (CronJob) for Any Resource
 
@@ -103,10 +102,8 @@ spec:
 ```
 
 **How to use:**
-- Works for Deployments, StatefulSets, or DeploymentConfigs—just match the label.
+- Works for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs—just match the label using `deploymentSelector`.
 - The job will be scheduled according to the cron expression in `schedule`.
-
----
 
 ### 3. Job Sequence (Chaining Runners)
 
@@ -158,8 +155,8 @@ spec:
 ---
 
 **Tip:**
-- Use the same pattern for any resource type by adjusting the `matchLabels`.
-- For OpenShift, `deploymentSelector` will also match DeploymentConfigs.
+- Use the same pattern for any resource type by adjusting the `matchLabels` in `deploymentSelector`. In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
+- For OpenShift, `deploymentSelector` will also match DeploymentConfigs and DaemonSets.
 - For more advanced scenarios, see the `config/samples/` directory and test fixtures.
 
 ---
@@ -195,7 +192,7 @@ Each `Runner` resource provides detailed status information to help you track jo
   Timestamp of the last failed job execution.
 
 - **watchedResources**:  
-  Lists the resources (Deployments, StatefulSets, DeploymentConfigs, etc.) being watched by this Runner, including their name, namespace, kind, and readiness status.
+  Lists the resources (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) being watched by this Runner, including their name, namespace, kind, and readiness status.
 
 ### Example: Runner Status Output
 
@@ -218,15 +215,23 @@ status:
       namespace: hestia-deployment-1
       kind: Deployment
       ready: true
-    - name: deployment-2
-      namespace: hestia-deployment-2
-      kind: Deployment
+    - name: statefulset-1
+      namespace: hestia-statefulset-1
+      kind: StatefulSet
+      ready: true
+    - name: daemonset-1
+      namespace: hestia-daemonset-1
+      kind: DaemonSet
+      ready: true
+    - name: deploymentconfig-1
+      namespace: hestia-dc-1
+      kind: DeploymentConfig
       ready: true
 ```
 
 **How to interpret:**
 - The `JobCompleted` condition with `status: "True"` and `reason: Successful` means the last job run finished successfully.
-- The `watchedResources` array shows which resources are being monitored and their readiness.
+- The `watchedResources` array shows which resources (Deployments, StatefulSets, DaemonSets, DeploymentConfigs) are being monitored and their readiness.
 - `lastSuccessfulRunTime` gives you the timestamp of the last successful job.
 
 **Tip:**  
