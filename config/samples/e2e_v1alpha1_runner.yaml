@@ -2,22 +2,21 @@ apiVersion: e2e.stakater.com/v1alpha1
 kind: Runner
 metadata:
   name: runner
+  labels:
+    app.kubernetes.io/name: hestia-operator
+    app.kubernetes.io/managed-by: kustomize
+    app: runner-1
 spec:
+#  schedule: "* * * * *" # every minute
   deploymentSelector:
     matchLabels:
       app: test
+  deadlineSeconds: 120
   template:
     spec:
       containers:
-        - name: playwright
-          image: e2e:passed
-          env:
-            - name: JOB_NAME
-              value: runner-1
-            - name: PUSHGATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: pushgateway-token
-                  key: token
+        - name: example
+          image: busybox
+          imagePullPolicy: IfNotPresent
+          command: ["sh", "-c", "sleep 10 && echo done && exit 0"]
       restartPolicy: Never
-

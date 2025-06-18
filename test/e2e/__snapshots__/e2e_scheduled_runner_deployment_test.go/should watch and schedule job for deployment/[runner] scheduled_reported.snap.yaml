@@ -1,0 +1,54 @@
+
+[controller operator should watch and schedule job for deployment - 1]
+metadata:
+  name: cron-deploy-runner
+  namespace: hestia-cron-deploy
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: cron-deploy-job
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: cron-deploy-job
+  template:
+    spec:
+      containers:
+        - name: e2e-cron-deploy
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+  schedule: "* * * * *"
+  deadlineSeconds: 120
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: cron-deploy-1
+      namespace: hestia-cron-deploy-1
+      kind: Deployment
+      ready: true
+    - name: cron-deploy-2
+      namespace: hestia-cron-deploy-2
+      kind: Deployment
+      ready: true
+
+---

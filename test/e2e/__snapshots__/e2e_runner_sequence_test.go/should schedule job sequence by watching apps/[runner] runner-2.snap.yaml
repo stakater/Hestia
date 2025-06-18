@@ -1,0 +1,48 @@
+
+[controller operator should schedule job sequence by watching apps - 1]
+metadata:
+  name: runner-2
+  namespace: hestia-runner2-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    sequence: runner-sequence
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  runnerSelector:
+    matchLabels:
+      app: runner-1
+  template:
+    spec:
+      containers:
+        - name: runner2-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 10 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: runner-1
+      namespace: hestia-runner1-instance
+      kind: Runner
+      ready: true
+
+---

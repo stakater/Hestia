@@ -1,0 +1,52 @@
+
+[controller operator should watch statefulsets - 1]
+metadata:
+  name: statefulsets-runner
+  namespace: hestia-statefulset-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: e2e-statefulset
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: e2e-statefulset
+  template:
+    spec:
+      containers:
+        - name: statefulset-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: statefulset-1
+      namespace: hestia-statefulset-1
+      kind: StatefulSet
+      ready: true
+    - name: statefulset-2
+      namespace: hestia-statefulset-2
+      kind: StatefulSet
+      ready: true
+
+---

@@ -1,0 +1,23 @@
+
+[controller operator should schedule job by watching deployments - 1]
+metadata:
+  name: deployment-runner
+  namespace: hestia-statefulset-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: deployment-runner
+    runner.stakater.com/namespace: hestia-statefulset-instance
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+data:
+  apps_v1-deployment-hestia-deployment-1-deployment-1: "true"
+  apps_v1-deployment-hestia-deployment-2-deployment-2: "true"
+  deadline: "0"
+  deploymentMinimum: "true"
+  generation: "1"
+  schedule: ""
+
+---

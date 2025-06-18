@@ -1,0 +1,46 @@
+
+[controller operator should schedule job by watching deployments - 1]
+metadata:
+  name: deployment-runner
+  namespace: hestia-statefulset-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: runner-1
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: e2e-deployment
+  template:
+    spec:
+      containers:
+        - name: deployment-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+  watchedResources:
+    - name: deployment-1
+      namespace: hestia-deployment-1
+      kind: Deployment
+      ready: false
+    - name: deployment-2
+      namespace: hestia-deployment-2
+      kind: Deployment
+      ready: false
+
+---

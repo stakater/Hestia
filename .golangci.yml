@@ -19,6 +19,12 @@ issues:
     - path: "test/*"
       linters:
         - errcheck
+        - lll
+        - dupl
+        - goconst
+        - unused
+        - ineffassign
+        - staticcheck
 linters:
   disable-all: true
   enable:

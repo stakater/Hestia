@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .name }}
+  labels:
+    app: {{ .appLabel }}
+    runner.stakater.com/enable: "true"
+spec:
+  serviceName: "e2e"
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ .appLabel }}
+  template:
+    metadata:
+      labels:
+        app: {{ .appLabel }}
+    spec:
+      initContainers:
+        - name: readiness-delay-{{ .readinessDelay }}
+          image: busybox:1.36.1
+          command: ["sh", "-c", "trap 'echo \"Init container received SIGTERM, shutting down...\"; exit 0' TERM; echo 'Init container starting, will wait exactly {{ .readinessDelay }} seconds'; sleep {{ .readinessDelay }}; echo 'Init container completed'"]
+
+      containers:
+        - name: busybox
+          image: busybox:1.36.1
+          command: ["sh", "-c", "echo 'Main container starting'; trap 'echo \"Received SIGTERM, shutting down...\"; exit 0' TERM; while true; do sleep 10; done"]
+          resources:
+            requests:
+              cpu: 1m
+              memory: 24Mi
+            limits:
+              cpu: 5m
+              memory: 64Mi
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: [ "ReadWriteOnce" ]
+        resources:
+          requests:
+            storage: 100Mi

@@ -1,0 +1,23 @@
+
+[controller operator should watch statefulsets - 1]
+metadata:
+  name: statefulsets-runner
+  namespace: hestia-statefulset-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: statefulsets-runner
+    runner.stakater.com/namespace: hestia-statefulset-instance
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+data:
+  apps_v1-statefulset-hestia-statefulset-1-statefulset-1: "true"
+  apps_v1-statefulset-hestia-statefulset-2-statefulset-2: "true"
+  deadline: "0"
+  deploymentMinimum: "true"
+  generation: "1"
+  schedule: ""
+
+---

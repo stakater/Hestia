@@ -1,0 +1,52 @@
+
+[controller operator should watch and schedule job for deployment-config - 1]
+metadata:
+  name: dcf-cron-runner
+  namespace: hestia-dcf-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: dcf-cron-runner
+    runner.stakater.com/namespace: hestia-dcf-instance
+    runner.stakater.com/version: <Any value>
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+spec:
+  schedule: "* * * * *"
+  concurrencyPolicy: Forbid
+  suspend: false
+  jobTemplate:
+    metadata:
+      labels:
+        runner.stakater.com/enable: "true"
+        runner.stakater.com/name: dcf-cron-runner
+        runner.stakater.com/namespace: hestia-dcf-instance
+        runner.stakater.com/version: <Any value>
+    spec:
+      activeDeadlineSeconds: 120
+      backoffLimit: 1
+      template:
+        spec:
+          containers:
+            - name: e2e-dcf-cron
+              image: busybox
+              command:
+                - sh
+                - -c
+                - sleep 1 && echo done && exit 0
+              terminationMessagePath: /dev/termination-log
+              terminationMessagePolicy: File
+              imagePullPolicy: IfNotPresent
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          dnsPolicy: ClusterFirst
+          securityContext: {}
+          schedulerName: default-scheduler
+      ttlSecondsAfterFinished: 1800
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 1
+
+---

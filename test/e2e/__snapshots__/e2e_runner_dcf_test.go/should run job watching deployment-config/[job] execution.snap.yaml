@@ -1,0 +1,67 @@
+
+[controller operator should run job watching deployment-config - 1]
+metadata:
+  name: <Any value>
+  generateName: hestia-dcf-runner-
+  namespace: hestia-dcf-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    runner.stakater.com/enable: "true"
+    runner.stakater.com/name: hestia-dcf-runner
+    runner.stakater.com/namespace: hestia-dcf-instance
+    runner.stakater.com/version: <Any value>
+  ownerReferences: <Any value>
+  managedFields: <Any value>
+spec:
+  parallelism: 1
+  completions: 1
+  backoffLimit: 1
+  selector: <Any value>
+  manualSelector: false
+  template:
+    metadata: <Any value>
+    spec:
+      containers:
+        - name: e2e-dcf-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          terminationMessagePath: /dev/termination-log
+          terminationMessagePolicy: File
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 30
+      dnsPolicy: ClusterFirst
+      securityContext: {}
+      schedulerName: default-scheduler
+  ttlSecondsAfterFinished: 1800
+  completionMode: NonIndexed
+  suspend: false
+  podReplacementPolicy: TerminatingOrFailed
+status:
+  conditions:
+    - type: SuccessCriteriaMet
+      status: "True"
+      lastProbeTime: <Any value>
+      lastTransitionTime: <Any value>
+      reason: CompletionsReached
+      message: Reached expected number of succeeded pods
+    - type: Complete
+      status: "True"
+      lastProbeTime: <Any value>
+      lastTransitionTime: <Any value>
+      reason: CompletionsReached
+      message: Reached expected number of succeeded pods
+  startTime: <Any value>
+  completionTime: <Any value>
+  succeeded: 1
+  terminating: 0
+  uncountedTerminatedPods: <Any value>
+  ready: 0
+
+---

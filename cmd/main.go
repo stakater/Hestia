@@ -21,6 +21,10 @@ import (
 	"flag"
 	"os"
 
+	ocp "github.com/openshift/api/apps/v1"
+	"github.com/stakater/hestia-operator/internal/constants"
+	v13 "k8s.io/api/core/v1"
+
 	v12 "k8s.io/api/apps/v1"
 	v1 "k8s.io/api/batch/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -41,8 +45,8 @@ import (
 	metricsserver "sigs.k8s.io/controller-runtime/pkg/metrics/server"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 
-	e2ev1alpha1 "github.com/example/hestia-operator/api/v1alpha1"
-	"github.com/example/hestia-operator/internal/controller"
+	e2ev1alpha1 "github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/controller"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -53,6 +57,7 @@ var (
 
 func init() {
 	utilruntime.Must(clientgoscheme.AddToScheme(scheme))
+	utilruntime.Must(ocp.AddToScheme(scheme))
 
 	utilruntime.Must(e2ev1alpha1.AddToScheme(scheme))
 	//+kubebuilder:scaffold:scheme
@@ -125,12 +130,24 @@ func main() {
 		// LeaderElectionReleaseOnCancel: true,
 		NewCache: func(config *rest.Config, opts cache.Options) (cache.Cache, error) {
 			watchEnabledLabel := labels.Set{}
-			watchEnabledLabel[controller.RunnerLabel] = "true"
+			watchEnabledLabel[constants.RunnerLabel] = "true"
 			opts.ByObject = map[client.Object]cache.ByObject{
 				&v12.Deployment{}: {
 					Label: labels.SelectorFromSet(watchEnabledLabel),
 				},
 				&v1.Job{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+				&v1.CronJob{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+				&v13.ConfigMap{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+				&v12.StatefulSet{}: {
+					Label: labels.SelectorFromSet(watchEnabledLabel),
+				},
+				&ocp.DeploymentConfig{}: {
 					Label: labels.SelectorFromSet(watchEnabledLabel),
 				},
 			}
@@ -140,6 +157,14 @@ func main() {
 	})
 	if err != nil {
 		setupLog.Error(err, "unable to start manager")
+		os.Exit(1)
+	}
+
+	if err = (&controller.JobRunnerReconciler{
+		Client: mgr.GetClient(),
+		Scheme: mgr.GetScheme(),
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "JobRunner")
 		os.Exit(1)
 	}
 

@@ -1,0 +1,54 @@
+
+[controller operator should watch and schedule job for deployment-config - 1]
+metadata:
+  name: dcf-cron-runner
+  namespace: hestia-dcf-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: dcf-job
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: dcf-job
+  template:
+    spec:
+      containers:
+        - name: e2e-dcf-cron
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+  schedule: "* * * * *"
+  deadlineSeconds: 120
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: JobCompleted
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: Successful
+      message: Reached expected number of succeeded pods
+  lastSuccessfulRunTime: <Any value>
+  watchedResources:
+    - name: dcf-scheduled-1
+      namespace: hestia-dcf-1
+      kind: DeploymentConfig
+      ready: true
+    - name: dcf-scheduled-2
+      namespace: hestia-dcf-2
+      kind: DeploymentConfig
+      ready: true
+
+---

@@ -1,0 +1,46 @@
+
+[controller operator should run job watching deployment-config - 1]
+metadata:
+  name: hestia-dcf-runner
+  namespace: hestia-dcf-instance
+  uid: <Any value>
+  resourceVersion: <Any value>
+  generation: 1
+  creationTimestamp: <Any value>
+  labels:
+    app: e2e-dcf-runner
+  annotations: <Any value>
+  managedFields: <Any value>
+spec:
+  deploymentSelector:
+    matchLabels:
+      app: dcf-cronjob
+  template:
+    spec:
+      containers:
+        - name: e2e-dcf-job
+          image: busybox
+          command:
+            - sh
+            - -c
+            - sleep 1 && echo done && exit 0
+          imagePullPolicy: IfNotPresent
+      restartPolicy: Never
+status:
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      lastTransitionTime: <Any value>
+      reason: LastReconcileCycleSucceded
+      message: ""
+  watchedResources:
+    - name: hestia-dcf-1
+      namespace: hestia-dcf-1
+      kind: DeploymentConfig
+      ready: false
+    - name: hestia-dcf-2
+      namespace: hestia-dcf-2
+      kind: DeploymentConfig
+      ready: false
+
+---
