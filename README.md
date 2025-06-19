@@ -241,6 +241,23 @@ Use this method if you want to build and deploy the operator manually for local 
    kubectl apply -k config/samples/
    ```
 
+#### Uninstall/Remove the Operator (Local)
+
+To remove the operator and its resources from your local or development cluster:
+
+1. **Delete Runner CRs:**
+   ```sh
+   kubectl delete -k config/samples/
+   ```
+2. **Uninstall CRDs:**
+   ```sh
+   make uninstall
+   ```
+3. **Remove the operator deployment:**
+   ```sh
+   make undeploy
+   ```
+
 ---
 
 ### Cluster Installation with OLM (Recommended for Production)
@@ -302,35 +319,6 @@ kubectl get csv -n <target-namespace>
 ```
 
 You should see a `ClusterServiceVersion` for `hestia-operator` in the `Succeeded` phase.
-
----
-
-## Monitoring and Status
-
-- The operator updates the status of each Runner CR with job execution results.
-- You can check the status using:
-  ```sh
-  kubectl get runners.e2e.stakater.com -o yaml
-  ```
-
----
-
-## Uninstall
-
-1. **Delete Runner CRs:**
-   ```sh
-   kubectl delete -k config/samples/
-   ```
-
-2. **Uninstall CRDs:**
-   ```sh
-   make uninstall
-   ```
-
-3. **Remove the operator:**
-   ```sh
-   make undeploy
-   ```
 
 ---
 
