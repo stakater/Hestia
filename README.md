@@ -16,12 +16,6 @@ Hestia Operator automates the management and execution of jobs in your Kubernete
 
 ## Getting Started
 
-### Prerequisites
-- go version v1.21.0+
-- docker version 17.03+.
-- kubectl version v1.11.3+.
-- Access to a Kubernetes v1.11.3+ cluster.
-
 ---
 
 ## Usage Examples
@@ -139,102 +133,6 @@ spec:
 
 ---
 
-### Deploy the Operator
-
-1. **Build and push the operator image:**
-   ```sh
-   make docker-build docker-push IMG=<your-registry>/hestia-operator:tag
-   ```
-
-2. **Install CRDs:**
-   ```sh
-   make install
-   ```
-
-3. **Deploy the operator:**
-   ```sh
-   make deploy IMG=<your-registry>/hestia-operator:tag
-   ```
-
-4. **Apply sample Runner CRs:**
-   ```sh
-   kubectl apply -k config/samples/
-   ```
-
----
-
-### Install with OLM (Operator Lifecycle Manager)
-
-You can install the Hestia Operator using OLM by creating a `CatalogSource` and a `Subscription` in your cluster. This method is recommended for production and for clusters that already use OLM to manage operators.
-
-The operator bundle and catalog images are published automatically via GitHub Actions. You can find the latest images at:
-- **Bundle image:** `${BUNDLE_IMG}` (default: `ghcr.io/stakater/hestia-operator-bundle:v0.0.1`)
-- **Catalog image:** `${CATALOG_IMG}` (default: `ghcr.io/stakater/hestia-operator-catalog:v0.0.1`)
-
----
-
-#### 1. Create a CatalogSource
-
-Apply a `CatalogSource` that points to your published catalog image:
-
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: CatalogSource
-metadata:
-  name: hestia-operator-catalog
-  namespace: openshift-marketplace
-spec:
-  sourceType: grpc
-  image: <your-registry>/hestia-operator-catalog:v0.0.1
-  displayName: Hestia Operator Catalog
-  publisher: Stakater
-```
-
-#### 2. Create a Subscription
-
-After the `CatalogSource` is ready, create a `Subscription` to install the operator:
-
-```yaml
-apiVersion: operators.coreos.com/v1alpha1
-kind: Subscription
-metadata:
-  name: hestia-operator
-  namespace: <target-namespace>
-spec:
-  channel: alpha
-  name: hestia-operator
-  source: hestia-operator-catalog
-  sourceNamespace: openshift-marketplace
-  installPlanApproval: Automatic
-```
-
-- Replace `<your-registry>` with your image registry (e.g., `ghcr.io/stakater`).
-- Replace `<target-namespace>` with the namespace where you want the operator installed. On OpenShift, `openshift-operators` is commonly used for cluster-wide operators, but you can use any namespace as needed.
-- By default, the CatalogSource is created in the `openshift-marketplace` namespace, which is standard for OpenShift. You can change this if you want to scope the operator to a different namespace.
-
-**Note:** The default channel is `alpha`. You can change this if you have configured other channels in your bundle.
-
-#### 3. Verify Installation
-
-Check that the operator is installed and running:
-```sh
-kubectl get csv -n <target-namespace>
-```
-
-You should see a `ClusterServiceVersion` for `hestia-operator` in the `Succeeded` phase.
-
----
-
-## Monitoring and Status
-
-- The operator updates the status of each Runner CR with job execution results.
-- You can check the status using:
-  ```sh
-  kubectl get runners.e2e.stakater.com -o yaml
-  ```
-
----
-
 ## Understanding Runner Status
 
 Each `Runner` resource provides detailed status information to help you track job execution and resource readiness. The key fields in `.status` are:
@@ -301,6 +199,119 @@ status:
 **Tip:**  
 - If a job fails, check the `reason` and `message` fields in the conditions for troubleshooting hints.
 - The `watchedResources` field helps you verify which resources are being monitored and their readiness.
+
+---
+
+## Installation & Deployment
+
+This section covers the requirements and methods for installing and deploying the Hestia Operator, both for local development and production clusters.
+
+### Prerequisites
+
+Before you build, deploy, or run the Hestia Operator, ensure you have the following tools and access:
+
+- go version v1.21.0+
+- docker version 17.03+.
+- kubectl version v1.11.3+.
+- Access to a Kubernetes v1.11.3+ cluster.
+
+---
+
+### Local Deployment (Manual)
+
+Use this method if you want to build and deploy the operator manually for local development or testing purposes.
+
+1. **Build and push the operator image:**
+   ```sh
+   make docker-build docker-push IMG=<your-registry>/hestia-operator:tag
+   ```
+
+2. **Install CRDs:**
+   ```sh
+   make install
+   ```
+
+3. **Deploy the operator:**
+   ```sh
+   make deploy IMG=<your-registry>/hestia-operator:tag
+   ```
+
+4. **Apply sample Runner CRs:**
+   ```sh
+   kubectl apply -k config/samples/
+   ```
+
+---
+
+### Cluster Installation with OLM (Recommended for Production)
+
+This is the recommended method for installing the operator in a production or shared cluster environment. OLM (Operator Lifecycle Manager) manages the lifecycle of the operator and makes upgrades and management easier.
+
+The operator bundle and catalog images are published automatically via GitHub Actions. You can find the latest images at:
+- **Bundle image:** `${BUNDLE_IMG}` (default: `ghcr.io/stakater/hestia-operator-bundle:v0.0.1`)
+- **Catalog image:** `${CATALOG_IMG}` (default: `ghcr.io/stakater/hestia-operator-catalog:v0.0.1`)
+
+---
+
+#### 1. Create a CatalogSource
+
+Apply a `CatalogSource` that points to your published catalog image:
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: CatalogSource
+metadata:
+  name: hestia-operator-catalog
+  namespace: openshift-marketplace
+spec:
+  sourceType: grpc
+  image: <your-registry>/hestia-operator-catalog:v0.0.1
+  displayName: Hestia Operator Catalog
+  publisher: Stakater
+```
+
+#### 2. Create a Subscription
+
+After the `CatalogSource` is ready, create a `Subscription` to install the operator:
+
+```yaml
+apiVersion: operators.coreos.com/v1alpha1
+kind: Subscription
+metadata:
+  name: hestia-operator
+  namespace: <target-namespace>
+spec:
+  channel: alpha
+  name: hestia-operator
+  source: hestia-operator-catalog
+  sourceNamespace: openshift-marketplace
+  installPlanApproval: Automatic
+```
+
+- Replace `<your-registry>` with your image registry (e.g., `ghcr.io/stakater`).
+- Replace `<target-namespace>` with the namespace where you want the operator installed. On OpenShift, `openshift-operators` is commonly used for cluster-wide operators, but you can use any namespace as needed.
+- By default, the CatalogSource is created in the `openshift-marketplace` namespace, which is standard for OpenShift. You can change this if you want to scope the operator to a different namespace.
+
+**Note:** The default channel is `alpha`. You can change this if you have configured other channels in your bundle.
+
+#### 3. Verify Installation
+
+Check that the operator is installed and running:
+```sh
+kubectl get csv -n <target-namespace>
+```
+
+You should see a `ClusterServiceVersion` for `hestia-operator` in the `Succeeded` phase.
+
+---
+
+## Monitoring and Status
+
+- The operator updates the status of each Runner CR with job execution results.
+- You can check the status using:
+  ```sh
+  kubectl get runners.e2e.stakater.com -o yaml
+  ```
 
 ---
 
