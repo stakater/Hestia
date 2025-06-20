@@ -1,8 +1,10 @@
-# Hestia Operator
+# Hestia
 
-Hestia Operator automates the management and execution of jobs in your Kubernetes cluster, supporting a variety of workload types (Deployments, StatefulSets, DeploymentConfigs, and more). It enables you to define, schedule, and monitor custom job runners using Kubernetes-native resources.
+Hestia automates the management and execution of jobs in your Kubernetes cluster, supporting a variety of workload types (Deployments, DaemonSets, StatefulSets, DeploymentConfigs, and more). It enables you to define, schedule, and monitor custom job runners using Kubernetes-native resources.
 
----
+## Why name "Hestia"?
+
+In Greek mythology, Hestia is the goddess of the hearth, home, and stability. Just like her role in maintaining the foundation of the home, this operator ensures the foundational stability of your applications before they move forward — by automatically running E2E tests only when the system is truly ready.
 
 ## Features
 
@@ -12,15 +14,11 @@ Hestia Operator automates the management and execution of jobs in your Kubernete
 - **Status Reporting:** Tracks and reports job execution status and results.
 - **Extensible:** Easily integrate with your CI/CD or automation workflows.
 
----
-
 ## Getting Started
 
----
+### Usage Examples
 
-## Usage Examples
-
-### 1. Unified Runner CR for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs
+#### 1. Unified Runner CR for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs
 
 ```yaml
 apiVersion: e2e.stakater.com/v1alpha1
@@ -48,7 +46,7 @@ spec:
 - **Note:** In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
 - The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly.
 
-### 2. Scheduled Runner (CronJob) for Any Resource
+#### 2. Scheduled Runner (CronJob) for Any Resource
 
 ```yaml
 apiVersion: e2e.stakater.com/v1alpha1
@@ -77,7 +75,7 @@ spec:
 - Works for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs—just match the label using `deploymentSelector`.
 - The job will be scheduled according to the cron expression in `schedule`.
 
-### 3. Job Sequence (Chaining Runners)
+#### 3. Job Sequence (Chaining Runners)
 
 **Runner 1:**
 
@@ -124,16 +122,13 @@ spec:
       restartPolicy: Never
 ```
 
----
-
 **Tip:**
+
 - Use the same pattern for any resource type by adjusting the `matchLabels` in `deploymentSelector`. In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
 - For OpenShift, `deploymentSelector` will also match DeploymentConfigs and DaemonSets.
 - For more advanced scenarios, see the `config/samples/` directory and test fixtures.
 
----
-
-## Understanding Runner Status
+### Understanding Runner Status
 
 Each `Runner` resource provides detailed status information to help you track job execution and resource readiness. The key fields in `.status` are:
 
@@ -156,7 +151,7 @@ Each `Runner` resource provides detailed status information to help you track jo
 - **watchedResources**:  
   Lists the resources (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) being watched by this Runner, including their name, namespace, kind, and readiness status.
 
-### Example: Runner Status Output
+#### Example: Runner Status Output
 
 ```yaml
 status:
@@ -200,8 +195,6 @@ status:
 - If a job fails, check the `reason` and `message` fields in the conditions for troubleshooting hints.
 - The `watchedResources` field helps you verify which resources are being monitored and their readiness.
 
----
-
 ## Installation & Deployment
 
 This section covers the requirements and methods for installing and deploying the Hestia Operator, both for local development and production clusters.
@@ -214,8 +207,6 @@ Before you build, deploy, or run the Hestia Operator, ensure you have the follow
 - docker version 17.03+.
 - kubectl version v1.11.3+.
 - Access to a Kubernetes v1.11.3+ cluster.
-
----
 
 ### Local Deployment (Manual)
 
@@ -258,8 +249,6 @@ To remove the operator and its resources from your local or development cluster:
    make undeploy
    ```
 
----
-
 ### Cluster Installation with OLM (Recommended for Production)
 
 This is the recommended method for installing the operator in a production or shared cluster environment. OLM (Operator Lifecycle Manager) manages the lifecycle of the operator and makes upgrades and management easier.
@@ -267,8 +256,6 @@ This is the recommended method for installing the operator in a production or sh
 The operator bundle and catalog images are published automatically via GitHub Actions. You can find the latest images at:
 - **Bundle image:** `${BUNDLE_IMG}` (default: `ghcr.io/stakater/hestia-operator-bundle:v0.0.1`)
 - **Catalog image:** `${CATALOG_IMG}` (default: `ghcr.io/stakater/hestia-operator-catalog:v0.0.1`)
-
----
 
 #### 1. Create a CatalogSource
 
@@ -320,20 +307,14 @@ kubectl get csv -n <target-namespace>
 
 You should see a `ClusterServiceVersion` for `hestia-operator` in the `Succeeded` phase.
 
----
-
 ## Troubleshooting
 
 - **RBAC Issues:** Ensure your user has cluster-admin privileges if you encounter permission errors.
 - **Job Failures:** Check the Runner CR status and related Job/Pod logs for details.
 
----
-
 ## Contributing
 
 Contributions are welcome! Please see the [Kubebuilder Documentation](https://book.kubebuilder.io/introduction.html) for more on extending operators.
-
----
 
 ## License
 
