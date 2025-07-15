@@ -7,8 +7,8 @@ import (
 
 // RunnerSpec defines the desired state of Runner
 type RunnerSpec struct {
-	DeploymentSelector *metav1.LabelSelector `json:"deploymentSelector,omitempty"`
-	RunnerSelector     *metav1.LabelSelector `json:"runnerSelector,omitempty"`
+	WorkloadSelector *metav1.LabelSelector `json:"workloadSelector,omitempty"`
+	RunnerSelector   *metav1.LabelSelector `json:"runnerSelector,omitempty"`
 
 	JobName string `json:"jobName,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields

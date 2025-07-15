@@ -16,8 +16,8 @@ data:
   apps_v1-statefulset-hestia-cron-sts-1-cron-sts-1: "true"
   apps_v1-statefulset-hestia-cron-sts-2-cron-sts-2: "true"
   deadline: "120"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: "* * * * *"
+  workloadMinimum: "true"
 
 ---

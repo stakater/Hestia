@@ -16,8 +16,8 @@ data:
   apps_v1-daemonset-hestia-cron-daemonset-1-cron-daemonset-1: "true"
   apps_v1-daemonset-hestia-cron-daemonset-2-cron-daemonset-2: "true"
   deadline: "120"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: "* * * * *"
+  workloadMinimum: "true"
 
 ---

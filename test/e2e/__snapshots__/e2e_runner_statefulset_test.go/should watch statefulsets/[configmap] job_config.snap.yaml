@@ -16,8 +16,8 @@ data:
   apps_v1-statefulset-hestia-statefulset-1-statefulset-1: "true"
   apps_v1-statefulset-hestia-statefulset-2-statefulset-2: "true"
   deadline: "0"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: ""
+  workloadMinimum: "true"
 
 ---

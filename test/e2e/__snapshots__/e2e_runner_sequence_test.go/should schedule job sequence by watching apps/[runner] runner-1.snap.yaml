@@ -13,7 +13,7 @@ metadata:
   annotations: <Any value>
   managedFields: <Any value>
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: runner-1-app
   template:

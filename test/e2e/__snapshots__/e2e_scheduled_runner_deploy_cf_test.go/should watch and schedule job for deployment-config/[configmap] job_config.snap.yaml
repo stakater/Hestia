@@ -16,8 +16,8 @@ data:
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-dcf-scheduled-1: "true"
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-dcf-scheduled-2: "true"
   deadline: "120"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: "* * * * *"
+  workloadMinimum: "true"
 
 ---

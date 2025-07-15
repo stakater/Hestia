@@ -12,7 +12,7 @@ metadata:
   annotations: <Any value>
   managedFields: <Any value>
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: e2e-statefulset
   template:

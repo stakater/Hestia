@@ -5,7 +5,7 @@ metadata:
   labels:
     app: runner-1
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: e2e-deployment
   template:

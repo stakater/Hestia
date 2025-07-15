@@ -4,14 +4,15 @@ import (
 	"context"
 	"strconv"
 
-	"github.com/stakater/hestia-operator/api/v1alpha1"
-	"github.com/stakater/hestia-operator/internal/constants"
 	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/controller/controllerutil"
+
+	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/constants"
 )
 
 type JobConfig struct {
@@ -44,9 +45,9 @@ func (r *JobConfig) CreateOrUpdate(ctx context.Context, c client.Client, deploym
 
 		readinessMap := make(map[string]string)
 		r.resource.Data = readinessMap
-		if r.runner.Spec.DeploymentSelector != nil {
+		if r.runner.Spec.WorkloadSelector != nil {
 			CreateReadinessMap(readinessMap, deployments...)
-			r.resource.Data["deploymentMinimum"] = strconv.FormatBool(len(deployments) > 0)
+			r.resource.Data["workloadMinimum"] = strconv.FormatBool(len(deployments) > 0)
 		}
 
 		if r.runner.Spec.RunnerSelector != nil {

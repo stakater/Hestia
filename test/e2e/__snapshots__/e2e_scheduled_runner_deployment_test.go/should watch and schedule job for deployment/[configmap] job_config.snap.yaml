@@ -16,8 +16,8 @@ data:
   apps_v1-deployment-hestia-cron-deploy-1-cron-deploy-1: "true"
   apps_v1-deployment-hestia-cron-deploy-2-cron-deploy-2: "true"
   deadline: "120"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: "* * * * *"
+  workloadMinimum: "true"
 
 ---

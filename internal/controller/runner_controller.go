@@ -90,9 +90,9 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		{Group: "apps.openshift.io", Version: "v1", Kind: "DeploymentConfig"},
 	})
 
-	matchedDeployments, err := deploymentResource.GetAll(ctx, r.Client, runner.Spec.DeploymentSelector)
+	matchedDeployments, err := deploymentResource.GetAll(ctx, r.Client, runner.Spec.WorkloadSelector)
 	if err != nil {
-		return r.HandleError(ctx, runner, err, "error fetching selected deployments")
+		return r.HandleError(ctx, runner, err, "error fetching selected workloads")
 	}
 
 	// Get matchedDeployments selected runners
@@ -131,25 +131,21 @@ var readyPredicateFn = predicate.Funcs{
 
 		switch kind {
 		case "Deployment":
-			od := e.ObjectOld.(*v1.Deployment)
 			cd := e.ObjectNew.(*v1.Deployment)
 
-			return !status.IsDeploymentReady(od) && status.IsDeploymentReady(cd)
+			return status.IsDeploymentReady(cd)
 		case "StatefulSet":
-			sd := e.ObjectOld.(*v1.StatefulSet)
 			sc := e.ObjectNew.(*v1.StatefulSet)
 
-			return !status.IsStatefulSetReady(sd) && status.IsStatefulSetReady(sc)
+			return status.IsStatefulSetReady(sc)
 		case "DaemonSet":
-			od := e.ObjectOld.(*v1.DaemonSet)
 			cd := e.ObjectNew.(*v1.DaemonSet)
 
-			return !status.IsDaemonSetReady(od) && status.IsDaemonSetReady(cd)
+			return status.IsDaemonSetReady(cd)
 		case "DeploymentConfig":
-			dcd := e.ObjectOld.(*v13.DeploymentConfig)
 			dcc := e.ObjectNew.(*v13.DeploymentConfig)
 
-			return !status.IsDeploymentConfigReady(dcd) && status.IsDeploymentConfigReady(dcc)
+			return status.IsDeploymentConfigReady(dcc)
 		default:
 			return false
 		}
@@ -204,7 +200,7 @@ func (r *RunnerReconciler) labelMatchingHandler(ctx context.Context, object clie
 	}
 
 	for _, runner := range runners.Items {
-		selector, err := v12.LabelSelectorAsSelector(runner.Spec.DeploymentSelector)
+		selector, err := v12.LabelSelectorAsSelector(runner.Spec.WorkloadSelector)
 		if err != nil {
 			r.logger.Error(err, "failed to create label selector")
 			return request

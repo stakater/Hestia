@@ -5,7 +5,7 @@ metadata:
   labels:
     app: e2e-dcf-runner
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: {{ .appLabel }}
   template:
