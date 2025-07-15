@@ -43,6 +43,7 @@ spec:
 
 **How to use:**
 - Set `workloadSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, DaemonSet, or DeploymentConfig.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - **Note:** In Hestia Operator, `workloadSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
 - The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly.
 
@@ -73,6 +74,7 @@ spec:
 
 **How to use:**
 - Works for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs—just match the label using `workloadSelector`.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - The job will be scheduled according to the cron expression in `schedule`.
 
 #### 3. Job Sequence (Chaining Runners)
@@ -125,6 +127,7 @@ spec:
 **Tip:**
 
 - Use the same pattern for any resource type by adjusting the `matchLabels` in `workloadSelector`. In Hestia Operator, `workloadSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - For OpenShift, `workloadSelector` will also match DeploymentConfigs and DaemonSets.
 - For more advanced scenarios, see the `config/samples/` directory and test fixtures.
 
