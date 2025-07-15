@@ -6,7 +6,7 @@ metadata:
     app: {{ .runnerLabel }}
     sequence: {{ .sequenceLabel }}
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: {{ .appLabel }}
   template:

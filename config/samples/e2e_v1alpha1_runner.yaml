@@ -8,7 +8,7 @@ metadata:
     app: runner-1
 spec:
 #  schedule: "* * * * *" # every minute
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: test
   deadlineSeconds: 120

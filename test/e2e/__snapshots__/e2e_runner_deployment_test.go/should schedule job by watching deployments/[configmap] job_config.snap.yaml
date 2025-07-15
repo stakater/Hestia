@@ -16,8 +16,8 @@ data:
   apps_v1-deployment-hestia-deployment-1-deployment-1: "true"
   apps_v1-deployment-hestia-deployment-2-deployment-2: "true"
   deadline: "0"
-  deploymentMinimum: "true"
   generation: "1"
   schedule: ""
+  workloadMinimum: "true"
 
 ---

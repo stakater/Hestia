@@ -28,7 +28,7 @@ metadata:
   labels:
     app: my-app
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: my-app
   template:
@@ -42,8 +42,9 @@ spec:
 ```
 
 **How to use:**
-- Set `deploymentSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, DaemonSet, or DeploymentConfig.
-- **Note:** In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
+- Set `workloadSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, DaemonSet, or DeploymentConfig.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
+- **Note:** In Hestia Operator, `workloadSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
 - The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly.
 
 #### 2. Scheduled Runner (CronJob) for Any Resource
@@ -58,7 +59,7 @@ metadata:
 spec:
   schedule: "* * * * *" # every minute
   deadlineSeconds: 120
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: my-app
   template:
@@ -72,7 +73,8 @@ spec:
 ```
 
 **How to use:**
-- Works for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs—just match the label using `deploymentSelector`.
+- Works for Deployments, StatefulSets, DaemonSets, or DeploymentConfigs—just match the label using `workloadSelector`.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - The job will be scheduled according to the cron expression in `schedule`.
 
 #### 3. Job Sequence (Chaining Runners)
@@ -88,7 +90,7 @@ metadata:
     app: runner-1
     sequence: runner-sequence
 spec:
-  deploymentSelector:
+  workloadSelector:
     matchLabels:
       app: runner-1-app
   template:
@@ -124,8 +126,9 @@ spec:
 
 **Tip:**
 
-- Use the same pattern for any resource type by adjusting the `matchLabels` in `deploymentSelector`. In Hestia Operator, `deploymentSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
-- For OpenShift, `deploymentSelector` will also match DeploymentConfigs and DaemonSets.
+- Use the same pattern for any resource type by adjusting the `matchLabels` in `workloadSelector`. In Hestia Operator, `workloadSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
+- **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
+- For OpenShift, `workloadSelector` will also match DeploymentConfigs and DaemonSets.
 - For more advanced scenarios, see the `config/samples/` directory and test fixtures.
 
 ### Understanding Runner Status
