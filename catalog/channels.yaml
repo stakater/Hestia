@@ -2,5 +2,5 @@ schema: olm.channel
 package: hestia-operator
 name: alpha
 entries:
-  - name: hestia-operator.v0.0.9
-    skipRange: ">=0.0.1 <0.0.9"
+  - name: hestia-operator.v0.1.0
+    skipRange: ">=0.0.1 <0.1.0"
