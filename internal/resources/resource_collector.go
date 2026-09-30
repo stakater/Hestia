@@ -9,6 +9,7 @@ import (
 
 	"github.com/stakater/hestia-operator/api/v1alpha1"
 	"github.com/stakater/hestia-operator/internal/status"
+	"k8s.io/apimachinery/pkg/api/meta"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/labels"
@@ -50,6 +51,11 @@ func (c *ResourceCollector) GetAll(ctx context.Context, kc client.Client, labelS
 		})
 
 		if err = kc.List(ctx, list, option); err != nil {
+			// A kind the cluster does not serve (e.g. DeploymentConfig off OpenShift) has no workloads to watch
+			if meta.IsNoMatchError(err) {
+				continue
+			}
+
 			return nil, err
 		}
 

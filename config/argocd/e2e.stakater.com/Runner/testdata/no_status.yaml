@@ -1,0 +1,10 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 1
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api

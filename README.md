@@ -144,6 +144,13 @@ Each `Runner` resource provides detailed status information to help you track jo
     - `status: "False"`: The job failed or is still running.
     - `reason`: Provides a short reason such as `Successful`, `Failed`, `Pending`, or `JobNotFound`.
     - `message`: Human-readable details about the job status.
+  - `Ready`, `Reconciling`, `Stalled`: [kstatus](https://github.com/kubernetes-sigs/cli-utils/blob/master/pkg/kstatus/README.md) conditions summarising the Runner as a whole (see [Stable-state timeout](#stable-state-timeout)).
+
+- **observedGeneration**:  
+  The Runner generation the status was computed for.
+
+- **progressingSince**:  
+  When the watched workloads were first seen not ready. Cleared once they are all ready.
 
 - **lastSuccessfulRunTime**:  
   Timestamp of the last successful job execution.
@@ -197,6 +204,49 @@ status:
 **Tip:**  
 - If a job fails, check the `reason` and `message` fields in the conditions for troubleshooting hints.
 - The `watchedResources` field helps you verify which resources are being monitored and their readiness.
+
+### Stable-state timeout
+
+When the workloads matched by `workloadSelector` start progressing (for example during a rollout) and do not all become ready within `stableStateTimeout`, the Runner reports `Stalled=True` with reason `StableStateTimeout`. The message names the workloads that are not ready.
+
+```yaml
+spec:
+  workloadSelector:
+    matchLabels:
+      app: my-app
+  stableStateTimeout: 30m # default; "0s" disables the timeout
+```
+
+- The clock starts when a watched workload is first seen not ready and resets once they are all ready.
+- A selector that matches no workloads counts as not ready.
+- If the workloads become ready after the timeout, the Stall clears and the job runs as normal.
+- Every rollout of a watched workload triggers a new job run once it becomes ready again.
+
+The kstatus conditions are derived as follows:
+
+| Workloads | Last job | Ready | Reconciling | Stalled |
+|---|---|---|---|---|
+| progressing, within timeout | any | False | True `Progressing` | False |
+| progressing, timed out | any | False | False | True `StableStateTimeout` |
+| ready | pending / not found | False | True `WaitingForJob` | False |
+| ready | succeeded | True `JobSucceeded` | False | False |
+| ready | failed | False | False | True `JobFailed` |
+
+Tools that understand kstatus work without configuration, e.g. `kubectl wait --for=condition=Ready runner/my-runner`.
+
+### Argo CD health
+
+Argo CD needs a health check per custom resource kind. Hestia ships one at [`config/argocd/e2e.stakater.com/Runner/health.lua`](config/argocd/e2e.stakater.com/Runner/health.lua) which maps `Stalled=True` to **Degraded**, `Ready=True` to **Healthy** and everything else to **Progressing**.
+
+Add it to the `argocd-cm` ConfigMap:
+
+```yaml
+data:
+  resource.customizations.health.e2e.stakater.com_Runner: |
+    <contents of config/argocd/e2e.stakater.com/Runner/health.lua>
+```
+
+With the Argo CD operator, set the same script under `spec.resourceHealthChecks` of the `ArgoCD` resource (`group: e2e.stakater.com`, `kind: Runner`).
 
 ## Installation & Deployment
 

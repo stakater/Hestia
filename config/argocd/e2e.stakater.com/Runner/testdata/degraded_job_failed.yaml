@@ -1,0 +1,29 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 2
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api
+status:
+  observedGeneration: 2
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: JobFailed
+      message: Job has reached the specified backoff limit
+    - type: Reconciling
+      status: "False"
+      reason: JobFailed
+      message: Job has reached the specified backoff limit
+    - type: Stalled
+      status: "True"
+      reason: JobFailed
+      message: Job has reached the specified backoff limit
+    - type: JobCompleted
+      status: "True"
+      reason: Failed
+      message: Job has reached the specified backoff limit
