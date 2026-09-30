@@ -19,12 +19,13 @@ package controller
 import (
 	"context"
 	"fmt"
-	"reflect"
+	"time"
 
 	"github.com/go-logr/logr"
 	v13 "github.com/openshift/api/apps/v1"
 	v1 "k8s.io/api/apps/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
+	apimeta "k8s.io/apimachinery/pkg/api/meta"
 	v12 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -40,6 +41,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	"github.com/stakater/hestia-operator/api/v1alpha1"
+	"github.com/stakater/hestia-operator/internal/constants"
 	"github.com/stakater/hestia-operator/internal/resources"
 	"github.com/stakater/hestia-operator/internal/status"
 )
@@ -111,8 +113,25 @@ func (r *RunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctr
 		return r.HandleError(ctx, runner, err, "error setting up job config")
 	}
 
+	health := status.EvaluateRunnerHealth(status.RunnerHealthInput{
+		WatchWorkloads:   runner.Spec.WorkloadSelector != nil,
+		Workloads:        resources.CreateReadinessStatus(matchedDeployments...),
+		JobCondition:     apimeta.FindStatusCondition(runner.Status.Conditions.Conditions, constants.JobStatusType),
+		Timeout:          stableStateTimeout(runner),
+		ProgressingSince: runner.Status.ProgressingSince,
+		Now:              time.Now(),
+	})
+
 	matchedResources := append(matchedRunners, matchedDeployments...)
-	return r.HandleSuccess(ctx, runner, resources.CreateReadinessStatus(matchedResources...))
+	return r.HandleSuccess(ctx, runner, resources.CreateReadinessStatus(matchedResources...), health)
+}
+
+func stableStateTimeout(runner *v1alpha1.Runner) time.Duration {
+	if runner.Spec.StableStateTimeout == nil {
+		return constants.DefaultStableStateTimeout
+	}
+
+	return runner.Spec.StableStateTimeout.Duration
 }
 
 var readyPredicateFn = predicate.Funcs{
@@ -123,33 +142,31 @@ var readyPredicateFn = predicate.Funcs{
 		return true
 	},
 	UpdateFunc: func(e event.UpdateEvent) bool {
-		objType := reflect.TypeOf(e.ObjectNew)
-		if objType.Kind() == reflect.Ptr {
-			objType = objType.Elem()
-		}
-		kind := objType.Name()
-
-		switch kind {
-		case "Deployment":
-			cd := e.ObjectNew.(*v1.Deployment)
-
-			return status.IsDeploymentReady(cd)
-		case "StatefulSet":
-			sc := e.ObjectNew.(*v1.StatefulSet)
-
-			return status.IsStatefulSetReady(sc)
-		case "DaemonSet":
-			cd := e.ObjectNew.(*v1.DaemonSet)
-
-			return status.IsDaemonSetReady(cd)
-		case "DeploymentConfig":
-			dcc := e.ObjectNew.(*v13.DeploymentConfig)
-
-			return status.IsDeploymentConfigReady(dcc)
-		default:
+		newReady, ok := isWorkloadReady(e.ObjectNew)
+		if !ok {
 			return false
 		}
+		oldReady, _ := isWorkloadReady(e.ObjectOld)
+
+		// Ready -> not-ready transitions are passed too so the stable-state clock starts
+		return newReady || oldReady != newReady
 	},
+}
+
+// isWorkloadReady returns the readiness of a watched workload, and false for ok when the kind is not watched
+func isWorkloadReady(obj client.Object) (ready bool, ok bool) {
+	switch o := obj.(type) {
+	case *v1.Deployment:
+		return status.IsDeploymentReady(o), true
+	case *v1.StatefulSet:
+		return status.IsStatefulSetReady(o), true
+	case *v1.DaemonSet:
+		return status.IsDaemonSetReady(o), true
+	case *v13.DeploymentConfig:
+		return status.IsDeploymentConfigReady(o), true
+	default:
+		return false, false
+	}
 }
 
 // SetupWithManager sets up the controller with the Manager.
@@ -178,15 +195,23 @@ func (r *RunnerReconciler) HandleError(ctx context.Context, cr *v1alpha1.Runner,
 	return ctrl.Result{}, nil
 }
 
-func (r *RunnerReconciler) HandleSuccess(ctx context.Context, cr *v1alpha1.Runner, readinessStatus []v1alpha1.WatchedResource) (ctrl.Result, error) {
+func (r *RunnerReconciler) HandleSuccess(ctx context.Context, cr *v1alpha1.Runner, readinessStatus []v1alpha1.WatchedResource, health status.RunnerHealth) (ctrl.Result, error) {
 	cr.Status.Conditions.SetReady(v12.ConditionTrue)
 	cr.Status.WatchedResources = readinessStatus
+	cr.Status.ObservedGeneration = cr.Generation
+	cr.Status.ProgressingSince = health.ProgressingSince
+
+	// SetStatusCondition keeps LastTransitionTime unless the status changes, as kstatus expects
+	for _, c := range health.Conditions {
+		c.ObservedGeneration = cr.Generation
+		apimeta.SetStatusCondition(&cr.Status.Conditions.Conditions, c)
+	}
 
 	err := r.Status().Update(ctx, cr)
 	if err != nil {
 		return ctrl.Result{Requeue: true}, nil
 	}
-	return ctrl.Result{}, nil
+	return ctrl.Result{RequeueAfter: health.RequeueAfter}, nil
 }
 
 // labelMatchingHandler reconcile Runners with matching deployment selector label

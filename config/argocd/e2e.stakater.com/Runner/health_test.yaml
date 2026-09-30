@@ -1,0 +1,25 @@
+tests:
+  - healthStatus:
+      status: Healthy
+      message: Reached expected number of succeeded pods
+    inputPath: testdata/healthy.yaml
+  - healthStatus:
+      status: Progressing
+      message: "waiting for workloads to become ready: Deployment app/api"
+    inputPath: testdata/progressing.yaml
+  - healthStatus:
+      status: Degraded
+      message: "workloads not stable after 30m0s: Deployment app/api"
+    inputPath: testdata/degraded_timeout.yaml
+  - healthStatus:
+      status: Degraded
+      message: Job has reached the specified backoff limit
+    inputPath: testdata/degraded_job_failed.yaml
+  - healthStatus:
+      status: Progressing
+      message: Waiting for Runner spec to be reconciled
+    inputPath: testdata/stale_generation.yaml
+  - healthStatus:
+      status: Progressing
+      message: Waiting for Runner status
+    inputPath: testdata/no_status.yaml

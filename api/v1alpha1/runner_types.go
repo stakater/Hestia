@@ -20,6 +20,10 @@ type RunnerSpec struct {
 
 	// Job deadline
 	DeadlineSeconds int64 `json:"deadlineSeconds,omitempty"`
+
+	// How long watched workloads may stay not-ready before the Runner reports Stalled. "0s" disables the timeout.
+	// +kubebuilder:default="30m"
+	StableStateTimeout *metav1.Duration `json:"stableStateTimeout,omitempty"`
 }
 
 type WatchedResource struct {
@@ -35,6 +39,11 @@ type RunnerStatus struct {
 	LastSuccessfulRun metav1.Time       `json:"lastSuccessfulRunTime,omitempty"`
 	LastFailedRun     metav1.Time       `json:"lastFailedRunTime,omitempty"`
 	WatchedResources  []WatchedResource `json:"watchedResources,omitempty"`
+
+	ObservedGeneration int64 `json:"observedGeneration,omitempty"`
+
+	// When the watched workloads were first seen not-ready; cleared once they are all ready
+	ProgressingSince *metav1.Time `json:"progressingSince,omitempty"`
 }
 
 //+kubebuilder:object:root=true

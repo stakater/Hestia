@@ -1,0 +1,27 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 2
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api
+  stableStateTimeout: 30m
+status:
+  observedGeneration: 2
+  progressingSince: "2026-09-30T12:00:00Z"
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: Progressing
+      message: "waiting for workloads to become ready: Deployment app/api"
+    - type: Reconciling
+      status: "True"
+      reason: Progressing
+      message: "waiting for workloads to become ready: Deployment app/api"
+    - type: Stalled
+      status: "False"
+      reason: Progressing
+      message: "waiting for workloads to become ready: Deployment app/api"

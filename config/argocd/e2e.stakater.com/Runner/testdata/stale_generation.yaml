@@ -1,0 +1,21 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 3
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api
+status:
+  observedGeneration: 2
+  conditions:
+    - type: Ready
+      status: "True"
+      reason: JobSucceeded
+      message: Reached expected number of succeeded pods
+    - type: Stalled
+      status: "False"
+      reason: JobSucceeded
+      message: Reached expected number of succeeded pods

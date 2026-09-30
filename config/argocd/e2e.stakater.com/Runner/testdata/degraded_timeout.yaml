@@ -1,0 +1,31 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 2
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api
+  stableStateTimeout: 30m
+status:
+  observedGeneration: 2
+  progressingSince: "2026-09-30T12:00:00Z"
+  conditions:
+    - type: Ready
+      status: "False"
+      reason: StableStateTimeout
+      message: "workloads not stable after 30m0s: Deployment app/api"
+    - type: Reconciling
+      status: "False"
+      reason: StableStateTimeout
+      message: "workloads not stable after 30m0s: Deployment app/api"
+    - type: Stalled
+      status: "True"
+      reason: StableStateTimeout
+      message: "workloads not stable after 30m0s: Deployment app/api"
+    - type: JobCompleted
+      status: "True"
+      reason: Successful
+      message: Reached expected number of succeeded pods

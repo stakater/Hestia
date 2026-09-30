@@ -1,0 +1,34 @@
+apiVersion: e2e.stakater.com/v1alpha1
+kind: Runner
+metadata:
+  name: api-runner
+  namespace: app
+  generation: 2
+spec:
+  workloadSelector:
+    matchLabels:
+      app: api
+  stableStateTimeout: 30m
+status:
+  observedGeneration: 2
+  conditions:
+    - type: ReconcileSuccess
+      status: "True"
+      reason: LastReconcileCycleSucceded
+      message: ""
+    - type: Ready
+      status: "True"
+      reason: JobSucceeded
+      message: Reached expected number of succeeded pods
+    - type: Reconciling
+      status: "False"
+      reason: JobSucceeded
+      message: Reached expected number of succeeded pods
+    - type: Stalled
+      status: "False"
+      reason: JobSucceeded
+      message: Reached expected number of succeeded pods
+    - type: JobCompleted
+      status: "True"
+      reason: Successful
+      message: Reached expected number of succeeded pods

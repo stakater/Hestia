@@ -84,18 +84,39 @@ func IsRunnerReady(runner *v1alpha1.Runner) bool {
 	return lastRunCondition.Reason == constants.SuccessfulRunReason
 }
 
-func IsDeploymentReady(deployment *v1.Deployment) bool {
-	return deployment != nil &&
-		deployment.Status.ObservedGeneration >= deployment.Generation &&
-		deployment.Status.UpdatedReplicas == deployment.Status.Replicas &&
-		deployment.Status.AvailableReplicas == deployment.Status.Replicas
+// desiredReplicas returns spec.replicas, which the API server defaults to 1 when unset
+func desiredReplicas(replicas *int32) int32 {
+	if replicas == nil {
+		return 1
+	}
+
+	return *replicas
 }
 
+// IsDeploymentReady compares against the desired replicas: a new Deployment's first status reports 0 of 0
+func IsDeploymentReady(deployment *v1.Deployment) bool {
+	if deployment == nil {
+		return false
+	}
+
+	desired := desiredReplicas(deployment.Spec.Replicas)
+	return deployment.Status.ObservedGeneration >= deployment.Generation &&
+		deployment.Status.Replicas == desired &&
+		deployment.Status.UpdatedReplicas == desired &&
+		deployment.Status.AvailableReplicas == desired
+}
+
+// IsStatefulSetReady compares against the desired replicas, like IsDeploymentReady
 func IsStatefulSetReady(sts *v1.StatefulSet) bool {
-	return sts != nil &&
-		sts.Status.ObservedGeneration >= sts.Generation &&
-		sts.Status.UpdatedReplicas == sts.Status.Replicas &&
-		sts.Status.ReadyReplicas == sts.Status.Replicas
+	if sts == nil {
+		return false
+	}
+
+	desired := desiredReplicas(sts.Spec.Replicas)
+	return sts.Status.ObservedGeneration >= sts.Generation &&
+		sts.Status.Replicas == desired &&
+		sts.Status.UpdatedReplicas == desired &&
+		sts.Status.ReadyReplicas == desired
 }
 
 func IsDeploymentConfigReady(dc *ocp.DeploymentConfig) bool {
