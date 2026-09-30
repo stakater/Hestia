@@ -68,9 +68,8 @@ func (r *JobResource) SyncJob(ctx context.Context, c client.Client) error {
 			Labels:       r.defaultJobLabels(),
 		},
 		Spec: v1.JobSpec{
-			Template:                r.runner.Spec.Template,
-			TTLSecondsAfterFinished: &[]int32{30 * 60}[0],
-			BackoffLimit:            &[]int32{1}[0],
+			Template:     r.runner.Spec.Template,
+			BackoffLimit: &[]int32{1}[0],
 		},
 	}
 

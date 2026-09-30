@@ -39,7 +39,6 @@ spec:
       dnsPolicy: ClusterFirst
       securityContext: {}
       schedulerName: default-scheduler
-  ttlSecondsAfterFinished: 1800
   completionMode: NonIndexed
   suspend: false
   podReplacementPolicy: TerminatingOrFailed
