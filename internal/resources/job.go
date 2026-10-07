@@ -35,7 +35,7 @@ func NewJobResource(runner *v1alpha1.Runner, config *v12.ConfigMap, scheme *runt
 func (r *JobResource) removeOldJobs(ctx context.Context, c client.Client) (*v1.Job, error) {
 	var existing *v1.Job
 	err := r.RemoveAll(ctx, c, func(job v1.Job) bool {
-		if job.Labels[constants.VersionLabel] == r.config.ResourceVersion {
+		if job.Labels[constants.VersionLabel] == r.config.Data[RunVersionKey] {
 			existing = &job
 			return false
 		}

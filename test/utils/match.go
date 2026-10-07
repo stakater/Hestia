@@ -82,11 +82,11 @@ func MatchYAMLResource(resource runtime.Object, snapshotName ...string) {
 			replaceMapValue(val)
 			return val, nil
 		}).ErrOnMissingPath(false),
-		// A workload's generation in the job config depends on how often the cluster rolled it
+		// A workload's generation and the run version depend on how often the cluster rolled it
 		match.Custom("$.data", func(val any) (any, error) {
 			if data, ok := val.(map[string]interface{}); ok {
 				for key := range data {
-					if strings.HasSuffix(key, ".generation") {
+					if strings.HasSuffix(key, ".generation") || key == "runVersion" {
 						data[key] = "<Any value>"
 					}
 				}

@@ -19,6 +19,7 @@ data:
   apps_v1-daemonset-hestia-cron-daemonset-2-cron-daemonset-2.generation: <Any value>
   deadline: "120"
   generation: "1"
+  runVersion: <Any value>
   schedule: "* * * * *"
   workloadMinimum: "true"
 

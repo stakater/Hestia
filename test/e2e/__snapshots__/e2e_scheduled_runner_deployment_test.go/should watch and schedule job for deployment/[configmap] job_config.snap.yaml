@@ -19,6 +19,7 @@ data:
   apps_v1-deployment-hestia-cron-deploy-2-cron-deploy-2.generation: <Any value>
   deadline: "120"
   generation: "1"
+  runVersion: <Any value>
   schedule: "* * * * *"
   workloadMinimum: "true"
 

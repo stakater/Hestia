@@ -77,5 +77,9 @@ var _ = Describe("Runner rollout trigger", func() {
 		after := jobConfig()
 		Expect(after).NotTo(Equal(before))
 		Expect(after).To(HaveKeyWithValue("apps_v1-deployment-default-fast-app", "true"))
+		Expect(after["runVersion"]).NotTo(Equal(before["runVersion"]))
+
+		By("reconciling again with nothing changed")
+		Expect(jobConfig()["runVersion"]).To(Equal(after["runVersion"]))
 	})
 })
