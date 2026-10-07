@@ -14,7 +14,9 @@ metadata:
   managedFields: <Any value>
 data:
   apps_v1-daemonset-hestia-daemonset-1-daemonset-1: "true"
+  apps_v1-daemonset-hestia-daemonset-1-daemonset-1.generation: <Any value>
   apps_v1-daemonset-hestia-daemonset-2-daemonset-2: "true"
+  apps_v1-daemonset-hestia-daemonset-2-daemonset-2.generation: <Any value>
   deadline: "0"
   generation: "1"
   schedule: ""

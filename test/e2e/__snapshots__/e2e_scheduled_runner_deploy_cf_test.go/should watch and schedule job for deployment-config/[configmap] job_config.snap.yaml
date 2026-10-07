@@ -14,7 +14,9 @@ metadata:
   managedFields: <Any value>
 data:
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-dcf-scheduled-1: "true"
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-dcf-scheduled-1.generation: <Any value>
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-dcf-scheduled-2: "true"
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-dcf-scheduled-2.generation: <Any value>
   deadline: "120"
   generation: "1"
   schedule: "* * * * *"

@@ -14,7 +14,9 @@ metadata:
   managedFields: <Any value>
 data:
   apps_v1-statefulset-hestia-cron-sts-1-cron-sts-1: "true"
+  apps_v1-statefulset-hestia-cron-sts-1-cron-sts-1.generation: <Any value>
   apps_v1-statefulset-hestia-cron-sts-2-cron-sts-2: "true"
+  apps_v1-statefulset-hestia-cron-sts-2-cron-sts-2.generation: <Any value>
   deadline: "120"
   generation: "1"
   schedule: "* * * * *"

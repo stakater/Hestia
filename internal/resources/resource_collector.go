@@ -65,9 +65,24 @@ func (c *ResourceCollector) GetAll(ctx context.Context, kc client.Client, labelS
 	return result, nil
 }
 
+// rolloutKinds are the workloads whose generation changes on every rollout
+var rolloutKinds = map[string]bool{
+	"Deployment":       true,
+	"StatefulSet":      true,
+	"DaemonSet":        true,
+	"DeploymentConfig": true,
+}
+
 func CreateReadinessMap(readinessMap map[string]string, objects ...unstructured.Unstructured) map[string]string {
 	for _, obj := range objects {
-		readinessMap[getKey(obj)] = strconv.FormatBool(status.IsResourceReady(obj))
+		key := getKey(obj)
+		readinessMap[key] = strconv.FormatBool(status.IsResourceReady(obj))
+
+		// A rollout bumps the generation, so the job config changes and the job reruns even when the
+		// rollout finished before the workload was seen not ready
+		if rolloutKinds[obj.GetKind()] {
+			readinessMap[key+".generation"] = strconv.FormatInt(obj.GetGeneration(), 10)
+		}
 	}
 
 	return readinessMap
