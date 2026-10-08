@@ -45,7 +45,7 @@ spec:
 - Set `workloadSelector.matchLabels` to match the labels of your target Deployment, StatefulSet, DaemonSet, or DeploymentConfig.
 - **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - **Note:** In Hestia Operator, `workloadSelector` is used for Deployments, StatefulSets, DaemonSets, and DeploymentConfigs.
-- The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly.
+- The operator will watch for changes in any of these resource types (Deployments, StatefulSets, DaemonSets, and DeploymentConfigs) that match the selector and trigger the job accordingly; see [When a job runs](#when-a-job-runs).
 
 #### 2. Scheduled Runner (CronJob) for Any Resource
 
@@ -130,6 +130,23 @@ spec:
 - **Important:** The label `runner.stakater.com/enable: "true"` **must be set on the target workload** (e.g., Deployment, StatefulSet, DaemonSet, or DeploymentConfig) for the operator to watch and trigger jobs for it.
 - For OpenShift, `workloadSelector` will also match DeploymentConfigs and DaemonSets.
 - For more advanced scenarios, see the `config/samples/` directory and test fixtures.
+
+### When a job runs
+
+A Runner runs its job once all watched workloads are ready, and again after any of these, once the workloads are ready again:
+
+- a rollout of a watched workload (new image, config change, `kubectl rollout restart`, `oc rollout latest`), however quickly it finishes
+- scaling a watched workload, including by an autoscaler
+- a workload starting or stopping to match the selector
+- a change to the Runner itself
+
+A pod restart or deletion without a rollout reruns the job only when it leaves the workload not ready long enough for the operator to notice. An operator restart or upgrade does not rerun it. No job runs while a watched workload is not ready or the selector matches nothing.
+
+To rerun by hand, delete the Runner's job; it is recreated:
+
+```bash
+kubectl delete job -n <namespace> -l runner.stakater.com/name=<runner>
+```
 
 ### Understanding Runner Status
 
