@@ -6,7 +6,6 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -14,7 +13,6 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	e2ev1alpha1 "github.com/stakater/hestia-operator/api/v1alpha1"
-	"github.com/stakater/hestia-operator/internal/constants"
 )
 
 var _ = Describe("Runner rollout trigger", func() {
@@ -83,56 +81,5 @@ var _ = Describe("Runner rollout trigger", func() {
 
 		By("reconciling again with nothing changed")
 		Expect(jobConfig()["runVersion"]).To(Equal(after["runVersion"]))
-	})
-})
-
-var _ = Describe("JobRunner on a job config from an older operator", func() {
-	ctx := context.Background()
-	key := types.NamespacedName{Name: "upgraded-runner", Namespace: "default"}
-	labels := map[string]string{
-		constants.RunnerLabel:         "true",
-		constants.OwnerLabel:          key.Name,
-		constants.OwnerNamespaceLabel: key.Namespace,
-	}
-
-	AfterEach(func() {
-		propagation := metav1.DeletePropagationBackground
-		Expect(client.IgnoreNotFound(k8sClient.DeleteAllOf(ctx, &batchv1.Job{}, client.InNamespace(key.Namespace), client.MatchingLabels(labels), client.PropagationPolicy(propagation)))).To(Succeed())
-		Expect(client.IgnoreNotFound(k8sClient.Delete(ctx, &corev1.ConfigMap{ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace}}))).To(Succeed())
-		Expect(client.IgnoreNotFound(k8sClient.Delete(ctx, &e2ev1alpha1.Runner{ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace}}))).To(Succeed())
-	})
-
-	It("leaves the job that already ran alone until the Runner writes a run version", func() {
-		Expect(k8sClient.Create(ctx, &e2ev1alpha1.Runner{ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace}})).To(Succeed())
-		Expect(k8sClient.Create(ctx, &corev1.ConfigMap{
-			ObjectMeta: metav1.ObjectMeta{Name: key.Name, Namespace: key.Namespace, Labels: labels},
-			Data:       map[string]string{"apps_v1-deployment-default-app": "true", "workloadMinimum": "true", "generation": "1"},
-		})).To(Succeed())
-
-		jobLabels := map[string]string{constants.VersionLabel: "1599604902"}
-		for k, v := range labels {
-			jobLabels[k] = v
-		}
-		Expect(k8sClient.Create(ctx, &batchv1.Job{
-			ObjectMeta: metav1.ObjectMeta{Name: "already-ran", Namespace: key.Namespace, Labels: jobLabels},
-			Spec: batchv1.JobSpec{Template: corev1.PodTemplateSpec{Spec: corev1.PodSpec{
-				RestartPolicy: corev1.RestartPolicyNever,
-				Containers:    []corev1.Container{{Name: "check", Image: "busybox"}},
-			}}},
-		})).To(Succeed())
-
-		reconciler := &JobRunnerReconciler{Client: k8sClient, Scheme: k8sClient.Scheme()}
-		_, err := reconciler.Reconcile(ctx, reconcile.Request{NamespacedName: key})
-		Expect(err).NotTo(HaveOccurred())
-
-		jobs := &batchv1.JobList{}
-		Expect(k8sClient.List(ctx, jobs, client.InNamespace(key.Namespace), client.MatchingLabels(labels))).To(Succeed())
-		var names []string
-		for _, j := range jobs.Items {
-			if j.DeletionTimestamp == nil {
-				names = append(names, j.Name)
-			}
-		}
-		Expect(names).To(ConsistOf("already-ran"))
 	})
 })

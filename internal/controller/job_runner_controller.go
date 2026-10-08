@@ -52,12 +52,6 @@ func (r *JobRunnerReconciler) Reconcile(ctx context.Context, req ctrl.Request) (
 		return ctrl.Result{}, err
 	}
 
-	// A job config from an older operator has no run version until the Runner rewrites it, which triggers
-	// this again; acting on it now would rerun a job that already ran
-	if configMap.Data[resources.RunVersionKey] == "" {
-		return ctrl.Result{}, nil
-	}
-
 	// Ensure the configMap registers is ready for all boolean keys
 	for _, v := range configMap.Data {
 		if v == strconv.FormatBool(false) {

@@ -140,7 +140,7 @@ A Runner runs its job once all watched workloads are ready, and again after any 
 - a workload starting or stopping to match the selector
 - a change to the Runner itself
 
-A pod restart or deletion without a rollout reruns the job only when it leaves the workload not ready long enough for the operator to notice. An operator restart or upgrade does not rerun it. No job runs while a watched workload is not ready or the selector matches nothing.
+A pod restart or deletion without a rollout reruns the job only when it leaves the workload not ready long enough for the operator to notice. An operator restart does not rerun it. No job runs while a watched workload is not ready or the selector matches nothing.
 
 To rerun by hand, delete the Runner's job; it is recreated:
 
