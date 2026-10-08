@@ -29,7 +29,7 @@ func (r *JobStatus) defaultJobLabels() map[string]string {
 		constants.RunnerLabel:         strconv.FormatBool(true),
 		constants.OwnerLabel:          r.config.Labels[constants.OwnerLabel],
 		constants.OwnerNamespaceLabel: r.config.Labels[constants.OwnerNamespaceLabel],
-		constants.VersionLabel:        r.config.ResourceVersion,
+		constants.VersionLabel:        r.config.Data[RunVersionKey],
 	}
 }
 

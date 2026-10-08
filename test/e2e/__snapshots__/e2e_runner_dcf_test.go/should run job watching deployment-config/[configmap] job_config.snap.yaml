@@ -14,9 +14,12 @@ metadata:
   managedFields: <Any value>
 data:
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-hestia-dcf-1: "true"
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-1-hestia-dcf-1.generation: <Any value>
   apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-hestia-dcf-2: "true"
+  apps.openshift.io_v1-deploymentconfig-hestia-dcf-2-hestia-dcf-2.generation: <Any value>
   deadline: "0"
   generation: "1"
+  runVersion: <Any value>
   schedule: ""
   workloadMinimum: "true"
 

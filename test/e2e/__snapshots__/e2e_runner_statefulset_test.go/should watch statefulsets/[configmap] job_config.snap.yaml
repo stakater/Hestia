@@ -14,9 +14,12 @@ metadata:
   managedFields: <Any value>
 data:
   apps_v1-statefulset-hestia-statefulset-1-statefulset-1: "true"
+  apps_v1-statefulset-hestia-statefulset-1-statefulset-1.generation: <Any value>
   apps_v1-statefulset-hestia-statefulset-2-statefulset-2: "true"
+  apps_v1-statefulset-hestia-statefulset-2-statefulset-2.generation: <Any value>
   deadline: "0"
   generation: "1"
+  runVersion: <Any value>
   schedule: ""
   workloadMinimum: "true"
 
