@@ -108,6 +108,29 @@ flowchart LR
 - `make install` / `make deploy IMG=...` — CRDs / operator onto a cluster.
 - `make docker-build docker-push IMG=...`, `make bundle`, `make catalog-build` — images & OLM.
 
+## How we build (the method)
+
+Hestia follows a customized, BMAD-derived method — the same one we run in kube-ward
+and kube-census. The full loop, the lifecycle gate, the enforcement map, and the
+relationship to BMAD are in [docs/method.md](docs/method.md). In brief, **do these
+in order** for any non-trivial change — never "code first, story after":
+
+1. **Story.** Add/approve a user story in [docs/roadmap.md](docs/roadmap.md) (house
+   format + **Done:** line). It must be 👍 Approved before implementation starts.
+2. **Planning doc.** Copy [docs/planning/TEMPLATE.md](docs/planning/TEMPLATE.md) to
+   `docs/planning/<slug>.md` — a context capsule a cold session can execute from alone.
+3. **Red.** Write the failing envtest first (trigger changes → `rollout_trigger_test.go`
+   / `stable_state_timeout_test.go`).
+4. **Green.** Implement to the test.
+5. **Verify (DoD).** `make test` **and** `make lint` green; `make manifests` if the
+   CRD changed; docs/ADRs updated in the same change. CI enforces lint + unit tests.
+6. **Review.** `/code-review` before merge.
+
+Decisions are **immutable ADRs** ([docs/adr/](docs/adr/)) — supersede, never edit.
+See [ADR-0004](docs/adr/0004-testing-and-definition-of-done.md) for the DoD and the
+honest note that enforcement is at the CI gate (no `make verify`/hook yet — tracked
+as roadmap story DX.1).
+
 ## Conventions
 
 - **TDD.** This repo already tests behaviour with envtest + table-driven cases; add

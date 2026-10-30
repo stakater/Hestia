@@ -17,6 +17,19 @@ the verdict as a Kubernetes-native health status that GitOps tools understand.
 | See how Hestia compares to CronJobs, CI/CD, Argo hooks, Testkube… | [Comparison with alternatives](comparison-with-alternatives.md) |
 | Decide between Hestia and kube-health (KHI) | [Hestia vs kube-health](hestia-vs-kube-health.md) |
 | Install for production via OLM | [README » Installation](../README.md#installation--deployment) |
+| Contribute, and understand *how we build Hestia* | [The Hestia Method](method.md) |
+
+## How we build Hestia (contributors)
+
+Hestia follows a customized, BMAD-derived development method — the same one we run
+in our other operator projects. If you're changing code, start here:
+
+- [The Hestia Method](method.md) — vision → story → plan → red → green → verify →
+  review, the lifecycle gate, and where each practice is enforced.
+- [Roadmap & stories](roadmap.md) — the single backlog; every change traces to a story.
+- [Architecture Decision Records](adr/) — immutable decisions and their rejected alternatives.
+- [Planning-doc template](planning/TEMPLATE.md) — the context capsule each story gets.
+- [CLAUDE.md](../CLAUDE.md) — repo invariants, architecture map, and the workflow in brief.
 
 ## The one-paragraph pitch
 
