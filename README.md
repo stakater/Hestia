@@ -1,6 +1,31 @@
 # Hestia
 
-Hestia automates the management and execution of jobs in your Kubernetes cluster, supporting a variety of workload types (Deployments, DaemonSets, StatefulSets, DeploymentConfigs, and more). It enables you to define, schedule, and monitor custom job runners using Kubernetes-native resources.
+Hestia is a Kubernetes operator that **runs a verification Job every time your
+workloads roll out, scale, or otherwise settle into a ready state** — and reports
+the verdict as a Kubernetes-native health status. The canonical use is auto-running
+E2E/smoke tests the moment your app is deployed and genuinely healthy, **no matter
+who triggered the change** (a CI pipeline, a GitOps sync, an autoscaler, or a human).
+
+Unlike a CI post-deploy test step — which only runs for deployments that go through
+that one pipeline — Hestia lives *in the cluster* and reacts to the live readiness of
+your workloads, so verification fires on every path into "ready", and never mid-rollout.
+It supports Deployments, StatefulSets, DaemonSets, and (on OpenShift) DeploymentConfigs.
+
+> **What it is:** a change-triggered, readiness-gated Job runner with GitOps-readable
+> health (kstatus + an Argo CD health check).
+> **What it isn't:** a general job scheduler, a workflow/DAG engine, a test-reporting
+> platform, or a periodic synthetic-monitoring tool. See
+> [when not to use it](docs/comparison-with-alternatives.md#when-not-to-use-hestia).
+> **Maturity:** `v1alpha1`, early — pin versions and expect API churn.
+
+## Documentation
+
+Full docs live in [`docs/`](docs/):
+
+- [Getting started / Hello World](docs/getting-started.md) — your first Runner in ~10 minutes.
+- [How it works](docs/how-it-works.md) — architecture and the exact re-run rules.
+- [Comparison with alternatives](docs/comparison-with-alternatives.md) — CronJob, CI/CD, Argo hooks, Testkube, and more.
+- [Hestia vs kube-health (KHI)](docs/hestia-vs-kube-health.md) — how they differ, and when to use which.
 
 ## Why name "Hestia"?
 
